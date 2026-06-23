@@ -43,6 +43,7 @@
 const EXPERIMENT_ID = "yGbGMF1EoEGh";   // DataPipe Experiment ID
 const TOKEN_API     = "";               // <- paste Apps Script web-app URL to enable real
                                         //    token validation. Empty = DEV mode (accepts any).
+const TEST_TOKEN    = "CC-TEST00";      // always-valid token for testing — never gets invalidated.
 const N_BWS  = 4;   // placeholder; real study ~16 (+ attention checks)
 const N_DRAW = 2;   // placeholder; real study ~3-4
 
@@ -76,6 +77,7 @@ const T = {
     demo_vision: "Vision", v_normal: "Normal", v_corrected: "Corrected (glasses/lenses)",
     demo_exp: "Prior experience with crowd monitoring?", yes: "Yes", no: "No",
     choose: "— please choose —",
+    demo_truthful: "I confirm that I will answer all questions truthfully and to the best of my knowledge.",
 
     bws_title: "Part 1 of 2 — Clearest division",
     bws_body: "<p style='text-align:left'>Each screen shows the <b>same crowd</b> divided into regions in three ways (A, B, C). The black dots are people. First pick the division that <b>best</b> helps you understand where the crowd is; then pick the <b>worst</b>.</p>",
@@ -129,6 +131,7 @@ const T = {
     demo_vision: "Sehvermögen", v_normal: "Normal", v_corrected: "Korrigiert (Brille/Linsen)",
     demo_exp: "Vorerfahrung mit Crowd-Monitoring?", yes: "Ja", no: "Nein",
     choose: "— bitte wählen —",
+    demo_truthful: "Ich bestätige, dass ich alle Fragen wahrheitsgemäß und nach bestem Wissen beantworte.",
 
     bws_title: "Teil 1 von 2 — Klarste Aufteilung",
     bws_body: "<p style='text-align:left'>Jeder Bildschirm zeigt <b>dieselbe</b> Menschenmenge, auf drei Arten in Regionen aufgeteilt (A, B, C). Die schwarzen Punkte sind Personen. Wähle zuerst die Aufteilung, die <b>am besten</b> zeigt, wo die Menge ist; dann die <b>schlechteste</b>.</p>",
@@ -181,12 +184,14 @@ function jsonp(url, timeoutMs=8000){
   });
 }
 async function validateToken(tok){
+  if(tok === TEST_TOKEN){ return true; }                 // reusable test token (never invalidated)
   if(!TOKEN_API){ console.warn("TOKEN_API not set — DEV mode: accepting any non-empty token"); return true; }
   try { const j = await jsonp(`${TOKEN_API}?action=validate&token=${encodeURIComponent(tok)}`); return !!j.valid; }
   catch(e){ console.error(e); return false; }
 }
 async function markTokenUsed(tok){
-  if(!TOKEN_API || !tok) return;
+  if(!tok || tok === TEST_TOKEN) return;                 // never invalidate the test token
+  if(!TOKEN_API) return;
   try { await jsonp(`${TOKEN_API}?action=markUsed&token=${encodeURIComponent(tok)}`); }
   catch(e){ console.error(e); }
 }
@@ -249,12 +254,14 @@ function ccw(a,b,c){ return (c.y-a.y)*(b.x-a.x) > (b.y-a.y)*(c.x-a.x); }
 function segInt(a,b,c,d){ return ccw(a,c,d)!==ccw(b,c,d) && ccw(a,b,c)!==ccw(a,b,d); }
 function downsample(p,k){ if(p.length<=k) return p.slice(); const out=[]; const step=(p.length-1)/(k-1);
   for(let i=0;i<k;i++) out.push(p[Math.round(i*step)]); return out; }
-function dedupe(p,eps=3){ const out=[p[0]]; for(let i=1;i<p.length;i++){ const a=out[out.length-1],b=p[i];
+function dedupe(p,eps=5){ const out=[p[0]]; for(let i=1;i<p.length;i++){ const a=out[out.length-1],b=p[i];
   if(Math.hypot(b.x-a.x,b.y-a.y)>=eps) out.push(b); } return out; }
-function selfIntersects(poly){ // poly: closed ring (first==last). returns true if any non-adjacent edges cross
-  const n=poly.length-1; if(n<4) return false;
-  for(let i=0;i<n;i++) for(let j=i+2;j<n;j++){
-    if(i===0 && j===n-1) continue; // adjacent (shared closing vertex)
+function selfIntersects(poly){ // closed ring; flags only "significant" lobe crossings (e.g. figure-8),
+  const n=poly.length-1; if(n<6) return false;          // tolerating small local wiggles (lenient).
+  const sep=Math.max(3, Math.floor(n*0.12));            // crossing edges must be far apart along the path
+  for(let i=0;i<n;i++) for(let j=i+1;j<n;j++){
+    const arc=Math.min(j-i, n-(j-i));
+    if(arc<=sep) continue;                              // skip near/adjacent edges (local jitter)
     if(segInt(poly[i],poly[i+1],poly[j],poly[j+1])) return true;
   } return false; }
 
@@ -318,7 +325,7 @@ class DrawGroupsPlugin {
     display_element.querySelector('#dgundo').onclick  = ()=>{ strokes.pop(); errEl.textContent=''; redraw(); };
     display_element.querySelector('#dgclear').onclick = ()=>{ strokes=[]; errEl.textContent=''; redraw(); };
     display_element.querySelector('#dgdone').onclick  = ()=>{
-      const minArea = 0.008*W*H;   // reject lines / tiny shapes
+      const minArea = 0.004*W*H;   // reject lines / tiny shapes (lenient)
       const clean=[]; let openBad=false, crossBad=false;
       for(const s of strokes){
         const ds=dedupe(s);                          // drop near-duplicate samples (avoids false self-intersections)
@@ -429,7 +436,9 @@ const demographics = {
         <option value="normal">${t('v_normal')}</option><option value="corrected">${t('v_corrected')}</option></select></div>
     <div class="form-row">${t('demo_exp')}:
       <select name="experience" required><option value="">${t('choose')}</option>
-        <option value="yes">${t('yes')}</option><option value="no">${t('no')}</option></select></div>`,
+        <option value="yes">${t('yes')}</option><option value="no">${t('no')}</option></select></div>
+    <div class="form-row" style="margin-top:16px"><label>
+      <input type="checkbox" name="truthful" value="yes" required> ${t('demo_truthful')}</label></div>`,
   data: { task:"demographics" }
 };
 
