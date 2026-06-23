@@ -10,6 +10,8 @@
   <script src="https://unpkg.com/@jspsych/plugin-html-button-response@2.1.0"></script>
   <script src="https://unpkg.com/@jspsych/plugin-survey-html-form@2.1.0"></script>
   <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe@0.6.0"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-preload@2.1.0"></script>
+  <script src="stimuli.js"></script>
 
   <style>
     .jspsych-content { max-width: 920px; }
@@ -44,8 +46,9 @@ const EXPERIMENT_ID = "yGbGMF1EoEGh";   // DataPipe Experiment ID
 const TOKEN_API     = "https://script.google.com/macros/s/AKfycbxVjtVQtAbbDsdxColBuBwaNSNvD9QILVAUeINJZCTxF8ugJrX0cia3S8EB5Re-AML6/exec";
                                         //    token validation. Empty = DEV mode (accepts any).
 const TEST_TOKEN    = "CC-TEST00";      // always-valid token for testing — never gets invalidated.
-const N_BWS  = 4;   // placeholder; real study ~16 (+ attention checks)
-const N_DRAW = 2;   // placeholder; real study ~3-4
+const STIM_BASE = "stimuli_075/";   // rendered images, served next to index.html
+const N_BWS  = 16;  // BWS trials per participant (random subset of STIMULI)
+const N_DRAW = 3;   // draw trials per participant
 
 let L = "en";       // language, set on first screen
 let TOKEN = null;
@@ -92,7 +95,7 @@ const T = {
     ex_open: "Wrong: not closed / a line",
     ex_cross: "Wrong: loop crosses itself",
     ex_many: "Wrong: far too many tiny loops",
-    draw_hint: "This image has about <b>{N}</b> group(s). Draw one closed loop per group.",
+    draw_hint: "Draw one closed loop around each group of people you see.",
     draw_undo: "Undo last", draw_clear: "Clear all", draw_done: "Done",
     derr_none: "Please draw at least one closed loop around a group.",
     derr_open: "A loop is not closed (or is just a line). Each loop must enclose an area — please redraw it.",
@@ -146,7 +149,7 @@ const T = {
     ex_open: "Falsch: nicht geschlossen / eine Linie",
     ex_cross: "Falsch: Schleife kreuzt sich selbst",
     ex_many: "Falsch: viel zu viele winzige Schleifen",
-    draw_hint: "Dieses Bild hat etwa <b>{N}</b> Gruppe(n). Zeichne eine geschlossene Schleife pro Gruppe.",
+    draw_hint: "Zeichne eine geschlossene Schleife um jede Gruppe von Personen, die du siehst.",
     draw_undo: "Letzte zurück", draw_clear: "Alles löschen", draw_done: "Fertig",
     derr_none: "Bitte zeichne mindestens eine geschlossene Schleife um eine Gruppe.",
     derr_open: "Eine Schleife ist nicht geschlossen (oder nur eine Linie). Jede Schleife muss eine Fläche umschließen — bitte neu zeichnen.",
@@ -451,25 +454,25 @@ const bws_instr = {
 };
 
 // one BWS item = best screen + worst screen (worst excludes the best pick)
-function bwsItem(i, isPractice=false){
-  const w=240,h=180;
-  const pts=makeCrowd(1000+i,w,h, 1 + (i%2));
+function bwsItem(stim, isPractice=false){
   const methods=[
-    {m:'grid',    src:panel(pts,gridOverlay(w,h),w,h)},
-    {m:'quad',    src:panel(pts,quadOverlay(w,h),w,h)},
-    {m:'voronoi', src:panel(pts,voronoiOverlay(w,h),w,h)}
+    {m:'voronoi', src:STIM_BASE+stim.v},
+    {m:'grid',    src:STIM_BASE+stim.g},
+    {m:'quad',    src:STIM_BASE+stim.q}
   ];
   const order=jsPsych.randomization.shuffle([0,1,2]);     // position -> method index
   const layout=order.map(idx=>methods[idx].m);            // method at A/B/C
   const labels=['A','B','C'];
-  const baseChoices=order.map((idx,pos)=>`<div class="panel-cap">${labels[pos]}</div><img class="panel" src="${methods[idx].src}" width="${w}" height="${h}">`);
+  const baseChoices=order.map((idx,pos)=>`<div class="panel-cap">${labels[pos]}</div><img class="panel" src="${methods[idx].src}" style="width:270px;max-width:30vw">`);
   let bestPos = null;
+  const d0 = { task:'bws', practice:isPractice, stim_id:stim.id, dataset:stim.ds,
+               density:stim.dens, gt:stim.gt, kv:stim.kv, kg:stim.kg, kq:stim.kq, layout:JSON.stringify(layout) };
 
   const best = {
     type: jsPsychHtmlButtonResponse,
     stimulus: ()=>`${isPractice?`<div class="practice-banner">${t('practice')}</div>`:''}<p>${t('bws_best')}</p>`,
     choices: ()=>baseChoices,
-    data: { task:'bws', phase:'best', practice:isPractice, image_id:i, layout:JSON.stringify(layout) },
+    data: { ...d0, phase:'best' },
     on_finish: (d)=>{ d.best_pos=d.response; d.best_method=layout[d.response]; bestPos=d.response; }
   };
   const worst = {
@@ -480,7 +483,7 @@ function bwsItem(i, isPractice=false){
     button_html: (choice, idx)=> idx===bestPos
         ? `<button class="jspsych-btn" disabled style="opacity:.35;cursor:not-allowed;pointer-events:none">${choice}</button>`
         : `<button class="jspsych-btn">${choice}</button>`,
-    data: { task:'bws', phase:'worst', practice:isPractice, image_id:i, layout:JSON.stringify(layout) },
+    data: { ...d0, phase:'worst' },
     on_finish: (d)=>{ d.worst_pos=d.response; d.worst_method=layout[d.response]; }
   };
   return [best, worst];
@@ -500,20 +503,22 @@ const draw_instr = {
   choices: ()=>[t('got_it')],
   on_start: ()=>{ currentInstructions = `<h4>${t('draw_title')}</h4>${t('draw_body')}`; }
 };
-function drawTrial(i, isPractice=false){
-  const W=600,H=450; const nClusters = 1 + (i%3);   // 1..3 groups
-  const pts=makeCrowd(2000+i,W,H,nClusters);
+function drawTrial(stim, isPractice=false){
+  const aspect=(stim.W||4)/(stim.H||3);
+  let cw=760, ch=Math.round(cw/aspect);
+  if(ch>560){ ch=560; cw=Math.round(ch*aspect); }        // canvas aspect == image aspect (no distortion)
   return {
     type: DrawGroupsPlugin,
-    image_src: panel(pts,null,W,H),
+    image_src: STIM_BASE+stim.raw,
     prompt: ()=>`${isPractice?`<div class="practice-banner">${t('practice')}</div>`:''}<p><b>${t('draw_title')}</b></p>`,
-    hint: ()=>t('draw_hint').replace('{N}', nClusters),
-    target_loops: nClusters, max_loops: nClusters+2,
-    canvas_width:W, canvas_height:H, image_id:i,
+    hint: ()=>t('draw_hint'),
+    target_loops: stim.kv, max_loops: 8,                  // kv stored for offline ref; not shown (avoid priming)
+    canvas_width: cw, canvas_height: ch, image_id: 0,
     undo_label:()=>t('draw_undo'), clear_label:()=>t('draw_clear'), done_label:()=>t('draw_done'),
     err_none:()=>t('derr_none'), err_open:()=>t('derr_open'),
     err_cross:()=>t('derr_cross'), err_many:()=>t('derr_many'),
-    data: { task:'draw', practice:isPractice }
+    data: { task:'draw', practice:isPractice, stim_id:stim.id, dataset:stim.ds, density:stim.dens,
+            gt:stim.gt, kv:stim.kv, orig_W:stim.W, orig_H:stim.H }
   };
 }
 
@@ -552,16 +557,32 @@ const thanks = {
 /* ===========================================================================
    TIMELINE
    =========================================================================== */
+// --- per-participant assignment: random subset (image = random effect; exposure ~even) ---
+const POOL = STIMULI.slice();
+const practiceBWS = POOL[0], practiceDraw = POOL[1];      // fixed practice items
+const rest = POOL.slice(2);
+const bwsSet  = jsPsych.randomization.sampleWithoutReplacement(rest, Math.min(N_BWS, rest.length));
+const drawSet = jsPsych.randomization.sampleWithoutReplacement(rest.filter(s=>!bwsSet.includes(s)), N_DRAW);
+jsPsych.data.addProperties({ bws_ids:[practiceBWS,...bwsSet].map(s=>s.id).join(" "),
+                             draw_ids:[practiceDraw,...drawSet].map(s=>s.id).join(" ") });
+
 const bws_block = [];
-bws_block.push(...bwsItem(900, true));            // practice (reserved id)
-for(let i=0;i<N_BWS;i++) bws_block.push(...bwsItem(i));
+bws_block.push(...bwsItem(practiceBWS, true));    // practice
+for(const s of bwsSet) bws_block.push(...bwsItem(s));
 // TODO: insert attention-check items into bws_block.
 
 const draw_block = [];
-draw_block.push(drawTrial(900, true));            // practice (reserved id)
-for(let i=0;i<N_DRAW;i++) draw_block.push(drawTrial(i));
+draw_block.push(drawTrial(practiceDraw, true));   // practice
+for(const s of drawSet) draw_block.push(drawTrial(s));
 
-const timeline = [ lang, token_gate, consent, demographics,
+// preload the assigned images (progress bar before Part 1)
+const preload_imgs = [];
+for(const s of [practiceBWS, ...bwsSet])  preload_imgs.push(STIM_BASE+s.v, STIM_BASE+s.g, STIM_BASE+s.q);
+for(const s of [practiceDraw, ...drawSet]) preload_imgs.push(STIM_BASE+s.raw);
+const preload = { type: jsPsychPreload, images: preload_imgs, show_progress_bar:true,
+                  continue_after_error:true, message:"Loading images… / Bilder werden geladen…" };
+
+const timeline = [ lang, token_gate, consent, demographics, preload,
                    bws_instr, ...bws_block, draw_instr, ...draw_block, post ];
 if(EXPERIMENT_ID!=="REPLACE_WITH_DATAPIPE_ID"){ timeline.push(save_data, finalize_token); }
 timeline.push(thanks);
