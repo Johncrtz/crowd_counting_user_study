@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pipeline test</title>
+
+  <!-- jsPsych v8 core -->
+  <script src="https://unpkg.com/jspsych@8.2.3"></script>
+  <link rel="stylesheet" href="https://unpkg.com/jspsych@8.2.3/css/jspsych.css" />
+
+  <!-- plugins (v8-compatible) -->
+  <script src="https://unpkg.com/@jspsych/plugin-html-button-response@2.1.0"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-survey-text@2.1.0"></script>
+
+  <!-- DataPipe save plugin (v8-compatible) -->
+  <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe@0.6.0"></script>
+
+  <style>
+    .jspsych-content { max-width: 760px; }
+  </style>
+</head>
+<body></body>
+<script>
+/* ============================================================
+   CONFIG
+   Replace EXPERIMENT_ID with your DataPipe Experiment ID.
+   While it is still the placeholder, the survey runs and dumps
+   the data to the screen instead of saving — so you can test the
+   front-end immediately, even before DataPipe is set up.
+   ============================================================ */
+const EXPERIMENT_ID = "yGbGMF1EoEGh";
+
+const jsPsych = initJsPsych({
+  on_finish: () => {
+    if (EXPERIMENT_ID === "REPLACE_WITH_DATAPIPE_ID") {
+      jsPsych.data.displayData();   // local debug view (no save configured yet)
+    }
+  }
+});
+
+// Unique participant id + filename
+const subject_id = jsPsych.randomization.randomID(10);
+jsPsych.data.addProperties({ subject_id });
+const filename = `${subject_id}.csv`;
+
+const welcome = {
+  type: jsPsychHtmlButtonResponse,
+  stimulus: `<h2>Pipeline test</h2>
+    <p>A 30-second dummy survey to confirm that responses are recorded
+       and saved to the server.</p>
+    <p>Click <b>Start</b>.</p>`,
+  choices: ["Start"]
+};
+
+const dummy_choice = {
+  type: jsPsychHtmlButtonResponse,
+  stimulus: `<p style="font-size:18px">Dummy question: which option looks best?</p>`,
+  choices: ["A", "B", "C"],
+  data: { task: "dummy_bws" },
+  on_finish: (d) => { d.chosen = ["A", "B", "C"][d.response]; }
+};
+
+const dummy_text = {
+  type: jsPsychSurveyText,
+  questions: [{ prompt: "Type anything (dummy free-text):", rows: 2, name: "free" }],
+  data: { task: "dummy_text" }
+};
+
+const save_data = {
+  type: jsPsychPipe,
+  action: "save",
+  experiment_id: EXPERIMENT_ID,
+  filename: filename,
+  data_string: () => jsPsych.data.get().csv()
+};
+
+const thanks = {
+  type: jsPsychHtmlButtonResponse,
+  stimulus: `<h3>Done — thank you!</h3><p>Your responses were recorded.</p>`,
+  choices: ["Finish"]
+};
+
+// Only attempt a save once a real Experiment ID is set.
+const timeline = [welcome, dummy_choice, dummy_text];
+if (EXPERIMENT_ID !== "REPLACE_WITH_DATAPIPE_ID") timeline.push(save_data);
+timeline.push(thanks);
+
+jsPsych.run(timeline);
+</script>
+</html>
