@@ -5,46 +5,204 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Crowd partition study</title>
 
-  <!-- jsPsych v8 core -->
   <script src="https://unpkg.com/jspsych@8.2.3"></script>
   <link rel="stylesheet" href="https://unpkg.com/jspsych@8.2.3/css/jspsych.css" />
-
-  <!-- plugins -->
   <script src="https://unpkg.com/@jspsych/plugin-html-button-response@2.1.0"></script>
   <script src="https://unpkg.com/@jspsych/plugin-survey-html-form@2.1.0"></script>
-
-  <!-- DataPipe save plugin -->
   <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe@0.6.0"></script>
 
   <style>
-    .jspsych-content { max-width: 900px; }
+    .jspsych-content { max-width: 920px; }
     .jspsych-html-button-response-button { margin: 6px; }
     .panel-cap { font-weight: bold; font-size: 20px; margin-bottom: 4px; }
     img.panel { border: 1px solid #ccc; display: block; }
-    .lik { display:inline-block; text-align:center; margin:0 8px; }
+    .best { color: #1a8a3a; font-weight: bold; }
+    .worst { color: #c0392b; font-weight: bold; }
+    .practice-banner { background:#fff3cd; border:1px solid #ffe08a; border-radius:6px;
+                       padding:6px 10px; margin-bottom:10px; font-weight:bold; }
+    .form-row { text-align:left; margin:10px auto; max-width:560px; }
+    .form-row select, .form-row input { font-size:15px; padding:4px; }
+    .lik { display:inline-block; text-align:center; margin:0 9px; }
+    /* help (instruction replay) */
+    #help-fab { position:fixed; right:18px; bottom:18px; z-index:1000; display:none;
+                width:46px; height:46px; border-radius:50%; border:none; cursor:pointer;
+                background:#3E6591; color:#fff; font-size:22px; font-weight:bold;
+                box-shadow:0 2px 6px rgba(0,0,0,.3); }
+    #help-ov { position:fixed; inset:0; z-index:1001; display:none; background:rgba(0,0,0,.45);
+               align-items:center; justify-content:center; }
+    #help-box { background:#fff; max-width:600px; max-height:80vh; overflow:auto; padding:24px;
+                border-radius:10px; text-align:left; }
+    .grp { display:inline-block; vertical-align:top; margin:6px; text-align:center; }
   </style>
 </head>
 <body></body>
 <script>
-/* ============================================================
+/* ===========================================================================
    CONFIG
-   ============================================================ */
+   =========================================================================== */
 const EXPERIMENT_ID = "yGbGMF1EoEGh";   // DataPipe Experiment ID
+const TOKEN_API     = "";               // <- paste Apps Script web-app URL to enable real
+                                        //    token validation. Empty = DEV mode (accepts any).
+const N_BWS  = 4;   // placeholder; real study ~16 (+ attention checks)
+const N_DRAW = 2;   // placeholder; real study ~3-4
 
-/* ============================================================
-   PLACEHOLDER STIMULI
-   Self-contained SVG "crowds": one dot set per image, rendered
-   with three partition overlays (grid / quadtree / voronoi).
-   >>> Replace these generators with real rendered images later:
-       just point bwsItem()/drawTrial() at real image URLs. <<<
-   ============================================================ */
+let L = "en";       // language, set on first screen
+let TOKEN = null;
+let currentInstructions = "";   // shown by the help (?) button
+
+/* ===========================================================================
+   i18n
+   =========================================================================== */
+const T = {
+  en: {
+    continue: "Continue", got_it: "Got it", finish: "Finish",
+    help_btn: "?", help_title: "Instructions", help_close: "Close",
+    practice: "PRACTICE — this one does not count",
+
+    token_prompt: "<h2>Welcome</h2><p>Please enter the personal access token you received from the researcher.</p>",
+    token_btn: "Start", token_empty: "Please enter your token.",
+    token_invalid: "This token is not valid or has already been used.",
+
+    consent_title: "Before we start",
+    consent_body: "<p style='text-align:left'>You will see images of crowds divided into regions in different ways and judge which division is clearest. You will also mark crowd groups on a few images. It takes about <b>10 minutes</b>.</p><p style='text-align:left'>Participation is <b>voluntary</b> and you may stop at any time. All responses are <b>fully anonymous</b> — we never collect your name, email or IP. Data are processed for scientific research only, in accordance with the EU <b>GDPR (DSGVO)</b>, and may be published in aggregated form.</p>",
+    consent_agree: "I have read this and agree to take part",
+
+    demo_title: "A few details about you",
+    demo_intro: "<p style='text-align:left'>This is collected anonymously (GDPR / DSGVO) and only used, in aggregate, to describe the sample.</p>",
+    demo_age: "Age", demo_gender: "Gender",
+    g_f: "Female", g_m: "Male", g_d: "Diverse", g_na: "Prefer not to say",
+    demo_role: "Your role",
+    r_public: "General public", r_police: "Police", r_fire: "Fire / rescue", r_security: "Security", r_other: "Other",
+    demo_vision: "Vision", v_normal: "Normal", v_corrected: "Corrected (glasses/lenses)",
+    demo_exp: "Prior experience with crowd monitoring?", yes: "Yes", no: "No",
+    choose: "— please choose —",
+
+    bws_title: "Part 1 of 2 — Clearest division",
+    bws_body: "<p style='text-align:left'>Each screen shows the <b>same crowd</b> divided into regions in three ways (A, B, C). The black dots are people. First pick the division that <b>best</b> helps you understand where the crowd is; then pick the <b>worst</b>.</p>",
+    bws_best: "Which option (A / B / C) is the <span class='best'>BEST</span> at showing where the crowd is and how it is distributed?",
+    bws_worst: "And which option is the <span class='worst'>WORST</span> at showing where the crowd is?",
+    bws_worst_note: "(the option you chose as best is greyed out)",
+
+    draw_title: "Part 2 of 2 — Mark the crowd groups",
+    draw_body: "<p style='text-align:left'>Now you will see crowds with <b>no</b> regions drawn. Draw a <b>closed loop around each group of people</b> you naturally see — one loop per group. Each loop must be <b>fully closed</b> (start and end meet) and must <b>not cross itself</b>.</p>",
+    draw_examples: "Examples",
+    ex_good: "Good: one closed loop per group",
+    ex_open: "Wrong: not closed / a line",
+    ex_cross: "Wrong: loop crosses itself",
+    ex_many: "Wrong: far too many tiny loops",
+    draw_hint: "This image has about <b>{N}</b> group(s). Draw one closed loop per group.",
+    draw_undo: "Undo last", draw_clear: "Clear all", draw_done: "Done",
+    derr_none: "Please draw at least one closed loop around a group.",
+    derr_open: "A loop is not closed (or is just a line). Each loop must enclose an area — please redraw it.",
+    derr_cross: "A loop crosses itself (like a figure-8). Please draw simple, non-crossing loops.",
+    derr_many: "That is more loops than groups in this image. Please use one loop per group (max {M}).",
+
+    post_title: "Almost done — your overall impression",
+    post_intro: "<p style='text-align:left'>These questions are about the <b>region divisions</b> you just saw (the lines splitting each crowd into regions). Please answer for divisions <i>in general</i>, on a scale from 1 to 5.</p>",
+    q_clarity: "Overall, how <b>clear and easy to understand</b> were the region divisions you saw? (1 = very unclear, 5 = very clear)",
+    q_trust: "Imagine the system reports a crowd count <b>per region</b>. How much would you <b>trust</b> those regional counts? (1 = not at all, 5 = completely)",
+    q_pref: "For real public-safety monitoring, how <b>useful</b> would such region divisions be to support decisions? (1 = useless, 5 = very useful)",
+    lik_lo: "low", lik_hi: "high",
+
+    thanks_title: "Thank you!", thanks_body: "Your responses have been saved. You may now close this tab.",
+    saving: "Saving your data — please do not close this page…"
+  },
+  de: {
+    continue: "Weiter", got_it: "Verstanden", finish: "Fertig",
+    help_btn: "?", help_title: "Anleitung", help_close: "Schließen",
+    practice: "ÜBUNG — dieser Durchgang zählt nicht",
+
+    token_prompt: "<h2>Willkommen</h2><p>Bitte gib den persönlichen Zugangs-Token ein, den du von der Studienleitung erhalten hast.</p>",
+    token_btn: "Starten", token_empty: "Bitte gib deinen Token ein.",
+    token_invalid: "Dieser Token ist ungültig oder wurde bereits verwendet.",
+
+    consent_title: "Bevor es losgeht",
+    consent_body: "<p style='text-align:left'>Du siehst Bilder von Menschenmengen, die auf unterschiedliche Weise in Regionen aufgeteilt sind, und beurteilst, welche Aufteilung am verständlichsten ist. Außerdem markierst du auf einigen Bildern Personengruppen. Es dauert etwa <b>10 Minuten</b>.</p><p style='text-align:left'>Die Teilnahme ist <b>freiwillig</b> und kann jederzeit abgebrochen werden. Alle Antworten sind <b>vollständig anonym</b> — wir erheben weder Namen, E-Mail noch IP-Adresse. Die Daten werden ausschließlich zu wissenschaftlichen Zwecken gemäß <b>DSGVO</b> verarbeitet und ggf. in aggregierter Form veröffentlicht.</p>",
+    consent_agree: "Ich habe dies gelesen und nehme teil",
+
+    demo_title: "Ein paar Angaben zu dir",
+    demo_intro: "<p style='text-align:left'>Diese Angaben werden anonym erhoben (DSGVO) und nur in zusammengefasster Form zur Beschreibung der Stichprobe verwendet.</p>",
+    demo_age: "Alter", demo_gender: "Geschlecht",
+    g_f: "Weiblich", g_m: "Männlich", g_d: "Divers", g_na: "Keine Angabe",
+    demo_role: "Deine Rolle",
+    r_public: "Allgemeine Öffentlichkeit", r_police: "Polizei", r_fire: "Feuerwehr / Rettung", r_security: "Sicherheitsdienst", r_other: "Sonstige",
+    demo_vision: "Sehvermögen", v_normal: "Normal", v_corrected: "Korrigiert (Brille/Linsen)",
+    demo_exp: "Vorerfahrung mit Crowd-Monitoring?", yes: "Ja", no: "Nein",
+    choose: "— bitte wählen —",
+
+    bws_title: "Teil 1 von 2 — Klarste Aufteilung",
+    bws_body: "<p style='text-align:left'>Jeder Bildschirm zeigt <b>dieselbe</b> Menschenmenge, auf drei Arten in Regionen aufgeteilt (A, B, C). Die schwarzen Punkte sind Personen. Wähle zuerst die Aufteilung, die <b>am besten</b> zeigt, wo die Menge ist; dann die <b>schlechteste</b>.</p>",
+    bws_best: "Welche Option (A / B / C) zeigt <span class='best'>AM BESTEN</span>, wo die Menschenmenge ist und wie sie verteilt ist?",
+    bws_worst: "Und welche Option zeigt <span class='worst'>AM SCHLECHTESTEN</span>, wo die Menschenmenge ist?",
+    bws_worst_note: "(die zuvor als beste gewählte Option ist ausgegraut)",
+
+    draw_title: "Teil 2 von 2 — Personengruppen markieren",
+    draw_body: "<p style='text-align:left'>Jetzt siehst du Menschenmengen <b>ohne</b> eingezeichnete Regionen. Zeichne eine <b>geschlossene Schleife um jede Gruppe</b> von Personen, die du erkennst — eine Schleife pro Gruppe. Jede Schleife muss <b>vollständig geschlossen</b> sein (Anfang und Ende treffen sich) und darf sich <b>nicht selbst kreuzen</b>.</p>",
+    draw_examples: "Beispiele",
+    ex_good: "Gut: eine geschlossene Schleife pro Gruppe",
+    ex_open: "Falsch: nicht geschlossen / eine Linie",
+    ex_cross: "Falsch: Schleife kreuzt sich selbst",
+    ex_many: "Falsch: viel zu viele winzige Schleifen",
+    draw_hint: "Dieses Bild hat etwa <b>{N}</b> Gruppe(n). Zeichne eine geschlossene Schleife pro Gruppe.",
+    draw_undo: "Letzte zurück", draw_clear: "Alles löschen", draw_done: "Fertig",
+    derr_none: "Bitte zeichne mindestens eine geschlossene Schleife um eine Gruppe.",
+    derr_open: "Eine Schleife ist nicht geschlossen (oder nur eine Linie). Jede Schleife muss eine Fläche umschließen — bitte neu zeichnen.",
+    derr_cross: "Eine Schleife kreuzt sich selbst (wie eine 8). Bitte zeichne einfache, nicht-kreuzende Schleifen.",
+    derr_many: "Das sind mehr Schleifen als Gruppen im Bild. Bitte eine Schleife pro Gruppe (max. {M}).",
+
+    post_title: "Fast geschafft — dein Gesamteindruck",
+    post_intro: "<p style='text-align:left'>Diese Fragen beziehen sich auf die <b>Regionen-Aufteilungen</b>, die du gerade gesehen hast (die Linien, die jede Menge in Regionen teilen). Bitte antworte <i>allgemein</i> auf einer Skala von 1 bis 5.</p>",
+    q_clarity: "Wie <b>klar und verständlich</b> waren die gesehenen Aufteilungen insgesamt? (1 = sehr unklar, 5 = sehr klar)",
+    q_trust: "Angenommen, das System meldet eine Personenzahl <b>pro Region</b>. Wie sehr würdest du diesen regionalen Zahlen <b>vertrauen</b>? (1 = gar nicht, 5 = voll und ganz)",
+    q_pref: "Wie <b>nützlich</b> wären solche Aufteilungen für reales Sicherheits-Monitoring zur Entscheidungsunterstützung? (1 = nutzlos, 5 = sehr nützlich)",
+    lik_lo: "niedrig", lik_hi: "hoch",
+
+    thanks_title: "Vielen Dank!", thanks_body: "Deine Antworten wurden gespeichert. Du kannst diesen Tab jetzt schließen.",
+    saving: "Daten werden gespeichert — bitte diese Seite nicht schließen…"
+  }
+};
+const t = (k) => T[L][k];
+
+/* ===========================================================================
+   TOKEN validation (JSONP — avoids CORS with a Google Apps Script backend)
+   =========================================================================== */
+function jsonp(url, timeoutMs=8000){
+  return new Promise((resolve, reject) => {
+    const cb = "cb_" + Math.random().toString(36).slice(2);
+    const s = document.createElement("script");
+    let done = false;
+    const cleanup = () => { try{ delete window[cb]; }catch(e){ window[cb]=undefined; }
+                            if(s.parentNode) s.remove(); clearTimeout(timer); };
+    const timer = setTimeout(() => { if(done) return; done=true; cleanup(); reject(new Error("jsonp timeout")); }, timeoutMs);
+    window[cb] = (data) => { if(done) return; done=true; cleanup(); resolve(data); };
+    s.onerror   = ()     => { if(done) return; done=true; cleanup(); reject(new Error("jsonp failed")); };
+    s.src = url + (url.includes("?") ? "&" : "?") + "callback=" + cb;
+    document.body.appendChild(s);
+  });
+}
+async function validateToken(tok){
+  if(!TOKEN_API){ console.warn("TOKEN_API not set — DEV mode: accepting any non-empty token"); return true; }
+  try { const j = await jsonp(`${TOKEN_API}?action=validate&token=${encodeURIComponent(tok)}`); return !!j.valid; }
+  catch(e){ console.error(e); return false; }
+}
+async function markTokenUsed(tok){
+  if(!TOKEN_API || !tok) return;
+  try { await jsonp(`${TOKEN_API}?action=markUsed&token=${encodeURIComponent(tok)}`); }
+  catch(e){ console.error(e); }
+}
+
+/* ===========================================================================
+   PLACEHOLDER STIMULI (inline SVG; replace with real renders later)
+   =========================================================================== */
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
-
-function makeCrowd(seed,w,h){
+function makeCrowd(seed,w,h,nClusters=1){
   const r=mulberry32(seed); const pts=[];
-  const cx=w*(0.30+0.40*r()), cy=h*(0.30+0.40*r());
-  for(let i=0;i<130;i++){ pts.push([cx+(r()-0.5)*w*0.38, cy+(r()-0.5)*h*0.38]); } // dense blob
-  for(let i=0;i<45;i++){ pts.push([r()*w, r()*h]); }                                // sparse scatter
+  for(let c=0;c<nClusters;c++){
+    const cx=w*(0.20+0.60*r()), cy=h*(0.20+0.60*r());
+    const nd=70+Math.floor(60*r());
+    for(let i=0;i<nd;i++) pts.push([cx+(r()-0.5)*w*0.26, cy+(r()-0.5)*h*0.26]);
+  }
+  for(let i=0;i<35;i++) pts.push([r()*w, r()*h]);
   return pts.filter(p=>p[0]>3&&p[0]<w-3&&p[1]>3&&p[1]<h-3);
 }
 function svgURI(inner,w,h){
@@ -52,251 +210,351 @@ function svgURI(inner,w,h){
   return "data:image/svg+xml,"+encodeURIComponent(svg);
 }
 function dotsSVG(pts){ return pts.map(p=>`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.1" fill="#333"/>`).join(''); }
-
 const STK='stroke="#d2322d" stroke-width="2" fill="none"';
 function gridOverlay(w,h){ let s=''; const n=3;
   for(let i=1;i<n;i++){ s+=`<line x1="${(i*w/n).toFixed(1)}" y1="0" x2="${(i*w/n).toFixed(1)}" y2="${h}" ${STK}/>`;
-                         s+=`<line x1="0" y1="${(i*h/n).toFixed(1)}" x2="${w}" y2="${(i*h/n).toFixed(1)}" ${STK}/>`; }
-  return s; }
+                        s+=`<line x1="0" y1="${(i*h/n).toFixed(1)}" x2="${w}" y2="${(i*h/n).toFixed(1)}" ${STK}/>`; } return s; }
 function quadOverlay(w,h){ let s='';
   s+=`<line x1="${w/2}" y1="0" x2="${w/2}" y2="${h}" ${STK}/>`;
   s+=`<line x1="0" y1="${h/2}" x2="${w}" y2="${h/2}" ${STK}/>`;
   s+=`<line x1="${3*w/4}" y1="0" x2="${3*w/4}" y2="${h/2}" ${STK}/>`;
   s+=`<line x1="${w/2}" y1="${h/4}" x2="${w}" y2="${h/4}" ${STK}/>`;
   s+=`<line x1="${w/4}" y1="${h/2}" x2="${w/4}" y2="${h}" ${STK}/>`;
-  s+=`<line x1="0" y1="${3*h/4}" x2="${w/2}" y2="${3*h/4}" ${STK}/>`;
-  return s; }
+  s+=`<line x1="0" y1="${3*h/4}" x2="${w/2}" y2="${3*h/4}" ${STK}/>`; return s; }
 function voronoiOverlay(w,h){ let s='';
   s+=`<polyline points="${0.45*w},0 ${0.55*w},${0.35*h} ${0.40*w},${0.72*h} ${0.50*w},${h}" ${STK}/>`;
   s+=`<polyline points="${0.55*w},${0.35*h} ${w},${0.45*h}" ${STK}/>`;
   s+=`<polyline points="0,${0.60*h} ${0.40*w},${0.72*h}" ${STK}/>`;
-  s+=`<polyline points="${0.55*w},${0.35*h} ${0.70*w},0" ${STK}/>`;
-  return s; }
+  s+=`<polyline points="${0.55*w},${0.35*h} ${0.70*w},0" ${STK}/>`; return s; }
 function panel(pts,overlay,w,h){
   const inner=`<rect x="0" y="0" width="${w}" height="${h}" fill="#f4f4f2"/>`+dotsSVG(pts)+(overlay||'');
   return svgURI(inner,w,h);
 }
+// small example illustrations for the draw instructions
+function exGood(){ const w=150,h=110; const pts=makeCrowd(9,w,h,1);
+  return svgURI(`<rect width="${w}" height="${h}" fill="#f4f4f2"/>${dotsSVG(pts)}<ellipse cx="${w/2}" cy="${h/2}" rx="46" ry="38" fill="none" stroke="#1a8a3a" stroke-width="3"/>`,w,h); }
+function exOpen(){ const w=150,h=110; const pts=makeCrowd(9,w,h,1);
+  return svgURI(`<rect width="${w}" height="${h}" fill="#f4f4f2"/>${dotsSVG(pts)}<path d="M30,80 Q75,20 120,75" fill="none" stroke="#c0392b" stroke-width="3"/>`,w,h); }
+function exCross(){ const w=150,h=110;
+  return svgURI(`<rect width="${w}" height="${h}" fill="#f4f4f2"/><path d="M40,40 C120,40 30,90 110,90 C30,90 120,40 40,40 Z" fill="none" stroke="#c0392b" stroke-width="3"/>`,w,h); }
+function exMany(){ const w=150,h=110; const pts=makeCrowd(9,w,h,1); let c='';
+  for(let i=0;i<8;i++){ const x=30+(i%4)*30, y=40+Math.floor(i/4)*35; c+=`<circle cx="${x}" cy="${y}" r="12" fill="none" stroke="#c0392b" stroke-width="2.5"/>`; }
+  return svgURI(`<rect width="${w}" height="${h}" fill="#f4f4f2"/>${dotsSVG(pts)}${c}`,w,h); }
 
-/* ============================================================
-   CUSTOM PLUGIN: draw the natural crowd groups (freehand)
-   Records raw stroke coordinates; IoU vs each partition is
-   computed OFFLINE in Python, not here.
-   ============================================================ */
+/* ===========================================================================
+   geometry helpers for draw guardrails
+   =========================================================================== */
+function shoelace(p){ let a=0; for(let i=0;i<p.length-1;i++){ a+=p[i].x*p[i+1].y - p[i+1].x*p[i].y; } return Math.abs(a)/2; }
+function ccw(a,b,c){ return (c.y-a.y)*(b.x-a.x) > (b.y-a.y)*(c.x-a.x); }
+function segInt(a,b,c,d){ return ccw(a,c,d)!==ccw(b,c,d) && ccw(a,b,c)!==ccw(a,b,d); }
+function downsample(p,k){ if(p.length<=k) return p.slice(); const out=[]; const step=(p.length-1)/(k-1);
+  for(let i=0;i<k;i++) out.push(p[Math.round(i*step)]); return out; }
+function dedupe(p,eps=3){ const out=[p[0]]; for(let i=1;i<p.length;i++){ const a=out[out.length-1],b=p[i];
+  if(Math.hypot(b.x-a.x,b.y-a.y)>=eps) out.push(b); } return out; }
+function selfIntersects(poly){ // poly: closed ring (first==last). returns true if any non-adjacent edges cross
+  const n=poly.length-1; if(n<4) return false;
+  for(let i=0;i<n;i++) for(let j=i+2;j<n;j++){
+    if(i===0 && j===n-1) continue; // adjacent (shared closing vertex)
+    if(segInt(poly[i],poly[i+1],poly[j],poly[j+1])) return true;
+  } return false; }
+
+/* ===========================================================================
+   CUSTOM PLUGIN: draw the crowd groups (with guardrails)
+   =========================================================================== */
 const PT = jsPsychModule.ParameterType;
 class DrawGroupsPlugin {
   static info = {
-    name: "draw-groups",
-    version: "1.0.0",
+    name: "draw-groups", version: "2.0.0",
     parameters: {
-      image_src:     { type: PT.STRING,      default: "" },
-      prompt:        { type: PT.HTML_STRING,  default: "" },
-      canvas_width:  { type: PT.INT,          default: 600 },
-      canvas_height: { type: PT.INT,          default: 450 },
-      image_id:      { type: PT.INT,          default: 0 }
+      image_src:{type:PT.STRING,default:""}, prompt:{type:PT.HTML_STRING,default:""},
+      hint:{type:PT.HTML_STRING,default:""}, target_loops:{type:PT.INT,default:1}, max_loops:{type:PT.INT,default:3},
+      canvas_width:{type:PT.INT,default:600}, canvas_height:{type:PT.INT,default:450}, image_id:{type:PT.INT,default:0},
+      undo_label:{type:PT.STRING,default:"Undo"}, clear_label:{type:PT.STRING,default:"Clear"}, done_label:{type:PT.STRING,default:"Done"},
+      err_none:{type:PT.STRING,default:""}, err_open:{type:PT.STRING,default:""},
+      err_cross:{type:PT.STRING,default:""}, err_many:{type:PT.STRING,default:""}
     },
-    data: {
-      strokes:       { type: PT.STRING },
-      n_strokes:     { type: PT.INT },
-      canvas_width:  { type: PT.INT },
-      canvas_height: { type: PT.INT },
-      image_id:      { type: PT.INT },
-      rt:            { type: PT.INT }
-    }
+    data:{ strokes:{type:PT.STRING}, n_strokes:{type:PT.INT}, target_loops:{type:PT.INT},
+           canvas_width:{type:PT.INT}, canvas_height:{type:PT.INT}, image_id:{type:PT.INT}, rt:{type:PT.INT} }
   };
-  constructor(jsPsych){ this.jsPsych = jsPsych; }
+  constructor(jsPsych){ this.jsPsych=jsPsych; }
   trial(display_element, trial){
-    const W = trial.canvas_width, H = trial.canvas_height;
+    const W=trial.canvas_width, H=trial.canvas_height;
     display_element.innerHTML = `
       ${trial.prompt}
-      <div><canvas id="dg-canvas" width="${W}" height="${H}"
+      <p style="color:#555;margin:4px 0">${trial.hint}</p>
+      <div><canvas id="dg" width="${W}" height="${H}"
            style="border:1px solid #999;cursor:crosshair;touch-action:none;max-width:100%"></canvas></div>
-      <div style="margin-top:10px">
-        <button class="jspsych-btn" id="dg-undo">Undo last</button>
-        <button class="jspsych-btn" id="dg-clear">Clear all</button>
-        <button class="jspsych-btn" id="dg-done">Done</button>
+      <div id="dgerr" style="color:#c0392b;min-height:1.3em;margin:8px;font-weight:bold"></div>
+      <div>
+        <button class="jspsych-btn" id="dgundo">${trial.undo_label}</button>
+        <button class="jspsych-btn" id="dgclear">${trial.clear_label}</button>
+        <button class="jspsych-btn" id="dgdone">${trial.done_label}</button>
       </div>`;
-    const canvas = display_element.querySelector('#dg-canvas');
-    const ctx = canvas.getContext('2d');
-    const img = new Image();
-    let strokes = [], cur = null, drawing = false;
-    const t0 = performance.now();
+    const canvas=display_element.querySelector('#dg'), ctx=canvas.getContext('2d');
+    const errEl=display_element.querySelector('#dgerr');
+    const img=new Image(); let strokes=[], cur=null, drawing=false; const t0=performance.now();
 
     function redraw(){
       ctx.clearRect(0,0,W,H);
       if(img.complete && img.naturalWidth) ctx.drawImage(img,0,0,W,H);
-      ctx.lineWidth=3; ctx.strokeStyle='rgba(210,50,45,0.9)'; ctx.lineJoin='round'; ctx.lineCap='round';
+      ctx.lineWidth=3; ctx.strokeStyle='rgba(26,138,58,0.9)'; ctx.lineJoin='round'; ctx.lineCap='round';
       const all = cur ? strokes.concat([cur]) : strokes;
       for(const s of all){ if(s.length<1) continue; ctx.beginPath(); ctx.moveTo(s[0].x,s[0].y);
-        for(let i=1;i<s.length;i++) ctx.lineTo(s[i].x,s[i].y); ctx.stroke(); }
+        for(let i=1;i<s.length;i++) ctx.lineTo(s[i].x,s[i].y);
+        if(s!==cur) ctx.closePath();   // show committed loops closed
+        ctx.stroke(); }
     }
-    img.onload = redraw;
-    img.src = trial.image_src;
+    img.onload=redraw; img.src=trial.image_src;
 
-    function pos(e){
-      const r = canvas.getBoundingClientRect();
-      const cx = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
-      const cy = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
-      return { x: Math.round(cx*W/r.width), y: Math.round(cy*H/r.height) };
-    }
-    const start = (e)=>{ e.preventDefault(); drawing=true; cur=[pos(e)]; redraw(); };
-    const move  = (e)=>{ if(!drawing) return; e.preventDefault(); cur.push(pos(e)); redraw(); };
-    const end   = (e)=>{ if(!drawing) return; e.preventDefault(); if(cur&&cur.length>1) strokes.push(cur); cur=null; drawing=false; redraw(); };
+    function pos(e){ const r=canvas.getBoundingClientRect();
+      const cx=(e.touches?e.touches[0].clientX:e.clientX)-r.left, cy=(e.touches?e.touches[0].clientY:e.clientY)-r.top;
+      return {x:Math.round(cx*W/r.width), y:Math.round(cy*H/r.height)}; }
+    const start=(e)=>{ e.preventDefault(); drawing=true; cur=[pos(e)]; errEl.textContent=''; redraw(); };
+    const move =(e)=>{ if(!drawing) return; e.preventDefault(); cur.push(pos(e)); redraw(); };
+    const end  =(e)=>{ if(!drawing) return; e.preventDefault(); if(cur&&cur.length>2) strokes.push(cur); cur=null; drawing=false; redraw(); };
+    canvas.addEventListener('mousedown',start); canvas.addEventListener('mousemove',move); window.addEventListener('mouseup',end);
+    canvas.addEventListener('touchstart',start,{passive:false}); canvas.addEventListener('touchmove',move,{passive:false}); canvas.addEventListener('touchend',end,{passive:false});
 
-    canvas.addEventListener('mousedown',start);
-    canvas.addEventListener('mousemove',move);
-    window.addEventListener('mouseup',end);
-    canvas.addEventListener('touchstart',start,{passive:false});
-    canvas.addEventListener('touchmove',move,{passive:false});
-    canvas.addEventListener('touchend',end,{passive:false});
-
-    display_element.querySelector('#dg-undo').onclick  = ()=>{ strokes.pop(); redraw(); };
-    display_element.querySelector('#dg-clear').onclick = ()=>{ strokes=[]; redraw(); };
-    display_element.querySelector('#dg-done').onclick  = ()=>{
+    display_element.querySelector('#dgundo').onclick  = ()=>{ strokes.pop(); errEl.textContent=''; redraw(); };
+    display_element.querySelector('#dgclear').onclick = ()=>{ strokes=[]; errEl.textContent=''; redraw(); };
+    display_element.querySelector('#dgdone').onclick  = ()=>{
+      const minArea = 0.008*W*H;   // reject lines / tiny shapes
+      const clean=[]; let openBad=false, crossBad=false;
+      for(const s of strokes){
+        const ds=dedupe(s);                          // drop near-duplicate samples (avoids false self-intersections)
+        if(ds.length<6){ openBad=true; continue; }
+        const ring=ds.concat([ds[0]]);               // auto-close
+        if(shoelace(ring) < minArea){ openBad=true; continue; }
+        if(selfIntersects(downsample(ring,60))){ crossBad=true; continue; }
+        clean.push(ring);
+      }
+      if(crossBad){ errEl.textContent=trial.err_cross; return; }
+      if(openBad){ errEl.textContent=trial.err_open; return; }
+      if(clean.length===0){ errEl.textContent=trial.err_none; return; }
+      if(clean.length>trial.max_loops){ errEl.textContent=trial.err_many.replace('{M}',trial.max_loops); return; }
       window.removeEventListener('mouseup',end);
-      const data = { strokes:JSON.stringify(strokes), n_strokes:strokes.length,
-                     canvas_width:W, canvas_height:H, image_id:trial.image_id,
-                     rt: Math.round(performance.now()-t0) };
+      const data={ strokes:JSON.stringify(clean), n_strokes:clean.length, target_loops:trial.target_loops,
+                   canvas_width:W, canvas_height:H, image_id:trial.image_id, rt:Math.round(performance.now()-t0) };
       display_element.innerHTML='';
       this.jsPsych.finishTrial(data);
     };
   }
 }
 
-/* ============================================================
-   EXPERIMENT
-   ============================================================ */
+/* ===========================================================================
+   jsPsych init + help (instruction replay)
+   =========================================================================== */
 const jsPsych = initJsPsych({
-  on_finish: () => { if (EXPERIMENT_ID === "REPLACE_WITH_DATAPIPE_ID") jsPsych.data.displayData(); }
+  on_finish: () => { if(EXPERIMENT_ID==="REPLACE_WITH_DATAPIPE_ID") jsPsych.data.displayData(); }
 });
-
 const subject_id = jsPsych.randomization.randomID(10);
-// Prolific params (harmless if absent now):
-jsPsych.data.addProperties({
-  subject_id,
-  prolific_pid: jsPsych.data.getURLVariable('PROLIFIC_PID') || null,
-  study_id:     jsPsych.data.getURLVariable('STUDY_ID')     || null,
-  session_id:   jsPsych.data.getURLVariable('SESSION_ID')   || null
-});
-const filename = `${subject_id}.csv`;
+jsPsych.data.addProperties({ subject_id });
 
-/* ---- consent / intro ---- */
+// help button + overlay (built once; shown after language is chosen)
+const fab=document.createElement('button'); fab.id='help-fab'; fab.textContent='?';
+const ov=document.createElement('div'); ov.id='help-ov';
+ov.innerHTML=`<div id="help-box"><h3 id="help-h"></h3><div id="help-c"></div><br>
+  <button class="jspsych-btn" id="help-x"></button></div>`;
+document.body.appendChild(fab); document.body.appendChild(ov);
+fab.onclick=()=>{ document.getElementById('help-h').textContent=t('help_title');
+  document.getElementById('help-c').innerHTML=currentInstructions||'';
+  document.getElementById('help-x').textContent=t('help_close'); ov.style.display='flex'; };
+ov.onclick=(e)=>{ if(e.target===ov || e.target.id==='help-x') ov.style.display='none'; };
+
+/* ===========================================================================
+   TRIALS
+   =========================================================================== */
+// 0) language
+const lang = {
+  type: jsPsychHtmlButtonResponse,
+  stimulus: "<h2>Sprache / Language</h2><p>Bitte wähle deine Sprache.<br>Please choose your language.</p>",
+  choices: ["Deutsch", "English"],
+  on_finish: (d)=>{ L = d.response===0 ? "de" : "en"; jsPsych.data.addProperties({language:L}); }
+};
+
+// 1) token gate
+class TokenGatePlugin {
+  static info = { name:"token-gate", version:"1.0.0",
+    parameters:{ prompt:{type:PT.HTML_STRING,default:""}, button_label:{type:PT.STRING,default:"Start"},
+      err_empty:{type:PT.STRING,default:""}, err_invalid:{type:PT.STRING,default:""} },
+    data:{ token:{type:PT.STRING} } };
+  constructor(jsPsych){ this.jsPsych=jsPsych; }
+  trial(display_element, trial){
+    display_element.innerHTML = `${trial.prompt}
+      <div><input id="tok" type="text" autocomplete="off" spellcheck="false"
+           style="font-size:18px;padding:6px;text-align:center;text-transform:uppercase"></div>
+      <div id="tokerr" style="color:#c0392b;min-height:1.3em;margin:8px"></div>
+      <button class="jspsych-btn" id="toksub">${trial.button_label}</button>`;
+    const inp=display_element.querySelector('#tok'), err=display_element.querySelector('#tokerr'), btn=display_element.querySelector('#toksub');
+    const submit=async()=>{ const tok=inp.value.trim().toUpperCase();
+      if(!tok){ err.textContent=trial.err_empty; return; }
+      btn.disabled=true; err.textContent='…';
+      const ok=await validateToken(tok);
+      if(ok){ TOKEN=tok; this.jsPsych.data.addProperties({token:tok}); this.jsPsych.finishTrial({token:tok}); }
+      else { err.textContent=trial.err_invalid; btn.disabled=false; } };
+    btn.onclick=submit; inp.addEventListener('keydown',e=>{ if(e.key==='Enter') submit(); }); inp.focus();
+  }
+}
+const token_gate = {
+  type: TokenGatePlugin,
+  prompt: ()=>t('token_prompt'), button_label: ()=>t('token_btn'),
+  err_empty: ()=>t('token_empty'), err_invalid: ()=>t('token_invalid')
+};
+
+// 2) consent + privacy
 const consent = {
   type: jsPsychHtmlButtonResponse,
-  stimulus: `<h2>Crowd image study</h2>
-    <p style="text-align:left">You will see images of crowds divided into regions in different ways,
-    and you'll judge which division is clearest. You'll also mark crowd groups on a few images.
-    It takes about <b>10 minutes</b>. Participation is voluntary and anonymous; you may stop anytime.</p>
-    <p style="text-align:left">By clicking <b>I agree</b> you consent to take part.</p>`,
-  choices: ["I agree — start"]
+  stimulus: ()=>`<h2>${t('consent_title')}</h2>${t('consent_body')}`,
+  choices: ()=>[t('consent_agree')]
 };
 
-/* ---- BWS (primary) ---- */
+// 3) demographics (one page, all required)
+const demographics = {
+  type: jsPsychSurveyHtmlForm,
+  preamble: ()=>`<h3>${t('demo_title')}</h3>${t('demo_intro')}`,
+  button_label: ()=>t('continue'),
+  html: ()=>`
+    <div class="form-row">${t('demo_age')}: <input type="number" name="age" min="18" max="100" required></div>
+    <div class="form-row">${t('demo_gender')}:
+      <select name="gender" required><option value="">${t('choose')}</option>
+        <option value="f">${t('g_f')}</option><option value="m">${t('g_m')}</option>
+        <option value="d">${t('g_d')}</option><option value="na">${t('g_na')}</option></select></div>
+    <div class="form-row">${t('demo_role')}:
+      <select name="role" required><option value="">${t('choose')}</option>
+        <option value="public">${t('r_public')}</option><option value="police">${t('r_police')}</option>
+        <option value="fire">${t('r_fire')}</option><option value="security">${t('r_security')}</option>
+        <option value="other">${t('r_other')}</option></select></div>
+    <div class="form-row">${t('demo_vision')}:
+      <select name="vision" required><option value="">${t('choose')}</option>
+        <option value="normal">${t('v_normal')}</option><option value="corrected">${t('v_corrected')}</option></select></div>
+    <div class="form-row">${t('demo_exp')}:
+      <select name="experience" required><option value="">${t('choose')}</option>
+        <option value="yes">${t('yes')}</option><option value="no">${t('no')}</option></select></div>`,
+  data: { task:"demographics" }
+};
+
+// 4) BWS instructions (sets the help text for the block)
 const bws_instr = {
   type: jsPsychHtmlButtonResponse,
-  stimulus: `<h3>Part 1</h3>
-    <p style="text-align:left">Each screen shows the <b>same crowd</b> divided into regions in three ways (A, B, C).
-    The black dots are people. First pick the option that <b>best helps you understand where the crowd is and
-    how it is distributed</b>; then pick the <b>worst</b> one.</p>`,
-  choices: ["Got it"]
+  stimulus: ()=>`<h3>${t('bws_title')}</h3>${t('bws_body')}`,
+  choices: ()=>[t('got_it')],
+  on_start: ()=>{ currentInstructions = `<h4>${t('bws_title')}</h4>${t('bws_body')}`; fab.style.display='block'; }
 };
 
-function bwsItem(i){
+// one BWS item = best screen + worst screen (worst excludes the best pick)
+function bwsItem(i, isPractice=false){
   const w=240,h=180;
-  const pts = makeCrowd(1000+i,w,h);
-  const methods = [
-    { m:'grid',    src: panel(pts, gridOverlay(w,h),    w,h) },
-    { m:'quad',    src: panel(pts, quadOverlay(w,h),    w,h) },
-    { m:'voronoi', src: panel(pts, voronoiOverlay(w,h), w,h) }
+  const pts=makeCrowd(1000+i,w,h, 1 + (i%2));
+  const methods=[
+    {m:'grid',    src:panel(pts,gridOverlay(w,h),w,h)},
+    {m:'quad',    src:panel(pts,quadOverlay(w,h),w,h)},
+    {m:'voronoi', src:panel(pts,voronoiOverlay(w,h),w,h)}
   ];
-  const order  = jsPsych.randomization.shuffle([0,1,2]);   // position -> method index
-  const layout = order.map(idx => methods[idx].m);         // method shown at A/B/C
-  const labels = ['A','B','C'];
-  const choices = order.map((idx,pos) =>
-    `<div class="panel-cap">${labels[pos]}</div><img class="panel" src="${methods[idx].src}" width="${w}" height="${h}">`);
+  const order=jsPsych.randomization.shuffle([0,1,2]);     // position -> method index
+  const layout=order.map(idx=>methods[idx].m);            // method at A/B/C
+  const labels=['A','B','C'];
+  const baseChoices=order.map((idx,pos)=>`<div class="panel-cap">${labels[pos]}</div><img class="panel" src="${methods[idx].src}" width="${w}" height="${h}">`);
+  let bestPos = null;
 
   const best = {
     type: jsPsychHtmlButtonResponse,
-    stimulus: `<p><b>Which option (A/B/C) BEST helps you understand where the crowd is and how it is distributed?</b></p>`,
-    choices,
-    data: { task:'bws', phase:'best', image_id:i, layout: JSON.stringify(layout) },
-    on_finish: (d)=>{ d.best_pos=d.response; d.best_method=layout[d.response]; }
+    stimulus: ()=>`${isPractice?`<div class="practice-banner">${t('practice')}</div>`:''}<p>${t('bws_best')}</p>`,
+    choices: ()=>baseChoices,
+    data: { task:'bws', phase:'best', practice:isPractice, image_id:i, layout:JSON.stringify(layout) },
+    on_finish: (d)=>{ d.best_pos=d.response; d.best_method=layout[d.response]; bestPos=d.response; }
   };
   const worst = {
     type: jsPsychHtmlButtonResponse,
-    stimulus: `<p><b>And which option is the WORST at showing where the crowd is?</b></p>`,
-    choices,
-    data: { task:'bws', phase:'worst', image_id:i, layout: JSON.stringify(layout) },
+    stimulus: ()=>`${isPractice?`<div class="practice-banner">${t('practice')}</div>`:''}<p>${t('bws_worst')}</p><p style="color:#888;font-size:13px">${t('bws_worst_note')}</p>`,
+    choices: ()=>baseChoices,
+    // disable the option chosen as best (best != worst)
+    button_html: (choice, idx)=> idx===bestPos
+        ? `<button class="jspsych-btn" disabled style="opacity:.35;cursor:not-allowed;pointer-events:none">${choice}</button>`
+        : `<button class="jspsych-btn">${choice}</button>`,
+    data: { task:'bws', phase:'worst', practice:isPractice, image_id:i, layout:JSON.stringify(layout) },
     on_finish: (d)=>{ d.worst_pos=d.response; d.worst_method=layout[d.response]; }
   };
   return [best, worst];
 }
-const N_BWS = 4;   // placeholder; real study ~16 + attention checks
-const bws_block = [];
-for(let i=0;i<N_BWS;i++) bws_block.push(...bwsItem(i));
-// TODO: insert attention-check items (an obviously broken partition) into bws_block.
 
-/* ---- Boundary drawing (objective) ---- */
+// 5) draw instructions + examples (sets help text)
 const draw_instr = {
   type: jsPsychHtmlButtonResponse,
-  stimulus: `<h3>Part 2</h3>
-    <p style="text-align:left">Now you'll see crowds with <b>no</b> regions drawn. With your mouse,
-    <b>draw a loop around each group of people you naturally see</b> (one loop per group).
-    Use <i>Undo</i>/<i>Clear</i> to fix mistakes, then click <b>Done</b>.</p>`,
-  choices: ["Got it"]
+  stimulus: ()=>`<h3>${t('draw_title')}</h3>${t('draw_body')}
+    <p><b>${t('draw_examples')}:</b></p>
+    <div>
+      <div class="grp"><img src="${exGood()}"><div style="color:#1a8a3a">✓ ${t('ex_good')}</div></div>
+      <div class="grp"><img src="${exOpen()}"><div style="color:#c0392b">✗ ${t('ex_open')}</div></div>
+      <div class="grp"><img src="${exCross()}"><div style="color:#c0392b">✗ ${t('ex_cross')}</div></div>
+      <div class="grp"><img src="${exMany()}"><div style="color:#c0392b">✗ ${t('ex_many')}</div></div>
+    </div>`,
+  choices: ()=>[t('got_it')],
+  on_start: ()=>{ currentInstructions = `<h4>${t('draw_title')}</h4>${t('draw_body')}`; }
 };
-function drawTrial(i){
-  const W=600,H=450;
-  const pts = makeCrowd(2000+i,W,H);
+function drawTrial(i, isPractice=false){
+  const W=600,H=450; const nClusters = 1 + (i%3);   // 1..3 groups
+  const pts=makeCrowd(2000+i,W,H,nClusters);
   return {
     type: DrawGroupsPlugin,
-    image_src: panel(pts, null, W, H),
-    prompt: `<p><b>Draw a loop around each crowd group you see.</b></p>`,
-    canvas_width: W, canvas_height: H, image_id: i,
-    data: { task:'draw' }
+    image_src: panel(pts,null,W,H),
+    prompt: ()=>`${isPractice?`<div class="practice-banner">${t('practice')}</div>`:''}<p><b>${t('draw_title')}</b></p>`,
+    hint: ()=>t('draw_hint').replace('{N}', nClusters),
+    target_loops: nClusters, max_loops: nClusters+2,
+    canvas_width:W, canvas_height:H, image_id:i,
+    undo_label:()=>t('draw_undo'), clear_label:()=>t('draw_clear'), done_label:()=>t('draw_done'),
+    err_none:()=>t('derr_none'), err_open:()=>t('derr_open'),
+    err_cross:()=>t('derr_cross'), err_many:()=>t('derr_many'),
+    data: { task:'draw', practice:isPractice }
   };
 }
-const N_DRAW = 2;  // placeholder; real study ~3-4
-const draw_block = [];
-for(let i=0;i<N_DRAW;i++) draw_block.push(drawTrial(i));
 
-/* ---- post questionnaire (minimal) ---- */
-const lik = (name,q)=>`<p style="text-align:left">${q}</p><div style="margin-bottom:10px">`+
+// 6) post questionnaire (finalized, all required)
+const likert = (name,q)=>`<div class="form-row">${q}</div><div style="margin-bottom:14px">`+
+  `<span style="font-size:12px;color:#888">${'{LO}'}</span> `+
   [1,2,3,4,5].map(v=>`<label class="lik">${v}<br><input type="radio" name="${name}" value="${v}" required></label>`).join('')+
-  `</div>`;
+  ` <span style="font-size:12px;color:#888">${'{HI}'}</span></div>`;
 const post = {
   type: jsPsychSurveyHtmlForm,
-  preamble: `<h3>Almost done</h3><p>A few quick questions (1 = not at all, 5 = very).</p>`,
-  html: lik('trust','How much would you trust regional crowd counts based on the clearest division?')
-      + lik('clarity','Overall, how clear were the region divisions?')
-      + `<p style="text-align:left">Age: <input type="number" name="age" min="18" max="120" style="width:80px"></p>`
-      + `<p style="text-align:left">Role:
-          <select name="role">
-            <option value="public">General public</option>
-            <option value="police">Police</option>
-            <option value="fire">Fire / rescue</option>
-            <option value="security">Security</option>
-            <option value="other">Other</option>
-          </select></p>`,
+  preamble: ()=>`<h3>${t('post_title')}</h3>${t('post_intro')}`,
+  button_label: ()=>t('finish'),
+  html: ()=> (likert('clarity',t('q_clarity')) + likert('trust',t('q_trust')) + likert('pref',t('q_pref')))
+              .replaceAll('{LO}', t('lik_lo')).replaceAll('{HI}', t('lik_hi')),
   data: { task:'post' }
 };
 
-/* ---- save + thanks ---- */
+// 7) save + mark token used + thanks
 const save_data = {
-  type: jsPsychPipe,
-  action: "save",
-  experiment_id: EXPERIMENT_ID,
-  filename: filename,
-  data_string: () => jsPsych.data.get().csv()
+  type: jsPsychPipe, action: "save", experiment_id: EXPERIMENT_ID,
+  filename: ()=>`${TOKEN || subject_id}.csv`,
+  data_string: ()=>jsPsych.data.get().csv()
+};
+const finalize_token = {   // invalidate the token only AFTER a successful submit
+  type: jsPsychHtmlButtonResponse,
+  stimulus: ()=>`<p>${t('saving')}</p>`, choices: [], trial_duration: 50,
+  on_start: ()=>{ markTokenUsed(TOKEN); }
 };
 const thanks = {
   type: jsPsychHtmlButtonResponse,
-  stimulus: `<h3>Thank you!</h3><p>Your responses were recorded. You may close the tab.</p>`,
-  choices: ["Finish"]
+  stimulus: ()=>`<h3>${t('thanks_title')}</h3><p>${t('thanks_body')}</p>`,
+  choices: ()=>[t('finish')],
+  on_start: ()=>{ fab.style.display='none'; }
 };
 
-/* ---- run ---- */
-const timeline = [ consent, bws_instr, ...bws_block, draw_instr, ...draw_block, post ];
-if (EXPERIMENT_ID !== "REPLACE_WITH_DATAPIPE_ID") timeline.push(save_data);
+/* ===========================================================================
+   TIMELINE
+   =========================================================================== */
+const bws_block = [];
+bws_block.push(...bwsItem(900, true));            // practice (reserved id)
+for(let i=0;i<N_BWS;i++) bws_block.push(...bwsItem(i));
+// TODO: insert attention-check items into bws_block.
+
+const draw_block = [];
+draw_block.push(drawTrial(900, true));            // practice (reserved id)
+for(let i=0;i<N_DRAW;i++) draw_block.push(drawTrial(i));
+
+const timeline = [ lang, token_gate, consent, demographics,
+                   bws_instr, ...bws_block, draw_instr, ...draw_block, post ];
+if(EXPERIMENT_ID!=="REPLACE_WITH_DATAPIPE_ID"){ timeline.push(save_data, finalize_token); }
 timeline.push(thanks);
 
 jsPsych.run(timeline);
