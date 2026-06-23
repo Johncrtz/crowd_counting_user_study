@@ -3,70 +3,284 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Pipeline test</title>
+  <title>Crowd partition study</title>
 
   <!-- jsPsych v8 core -->
   <script src="https://unpkg.com/jspsych@8.2.3"></script>
   <link rel="stylesheet" href="https://unpkg.com/jspsych@8.2.3/css/jspsych.css" />
 
-  <!-- plugins (v8-compatible) -->
+  <!-- plugins -->
   <script src="https://unpkg.com/@jspsych/plugin-html-button-response@2.1.0"></script>
-  <script src="https://unpkg.com/@jspsych/plugin-survey-text@2.1.0"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-survey-html-form@2.1.0"></script>
 
-  <!-- DataPipe save plugin (v8-compatible) -->
+  <!-- DataPipe save plugin -->
   <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe@0.6.0"></script>
 
   <style>
-    .jspsych-content { max-width: 760px; }
+    .jspsych-content { max-width: 900px; }
+    .jspsych-html-button-response-button { margin: 6px; }
+    .panel-cap { font-weight: bold; font-size: 20px; margin-bottom: 4px; }
+    img.panel { border: 1px solid #ccc; display: block; }
+    .lik { display:inline-block; text-align:center; margin:0 8px; }
   </style>
 </head>
 <body></body>
 <script>
 /* ============================================================
    CONFIG
-   Replace EXPERIMENT_ID with your DataPipe Experiment ID.
-   While it is still the placeholder, the survey runs and dumps
-   the data to the screen instead of saving — so you can test the
-   front-end immediately, even before DataPipe is set up.
    ============================================================ */
-const EXPERIMENT_ID = "yGbGMF1EoEGh";
+const EXPERIMENT_ID = "yGbGMF1EoEGh";   // DataPipe Experiment ID
 
-const jsPsych = initJsPsych({
-  on_finish: () => {
-    if (EXPERIMENT_ID === "REPLACE_WITH_DATAPIPE_ID") {
-      jsPsych.data.displayData();   // local debug view (no save configured yet)
+/* ============================================================
+   PLACEHOLDER STIMULI
+   Self-contained SVG "crowds": one dot set per image, rendered
+   with three partition overlays (grid / quadtree / voronoi).
+   >>> Replace these generators with real rendered images later:
+       just point bwsItem()/drawTrial() at real image URLs. <<<
+   ============================================================ */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+
+function makeCrowd(seed,w,h){
+  const r=mulberry32(seed); const pts=[];
+  const cx=w*(0.30+0.40*r()), cy=h*(0.30+0.40*r());
+  for(let i=0;i<130;i++){ pts.push([cx+(r()-0.5)*w*0.38, cy+(r()-0.5)*h*0.38]); } // dense blob
+  for(let i=0;i<45;i++){ pts.push([r()*w, r()*h]); }                                // sparse scatter
+  return pts.filter(p=>p[0]>3&&p[0]<w-3&&p[1]>3&&p[1]<h-3);
+}
+function svgURI(inner,w,h){
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${inner}</svg>`;
+  return "data:image/svg+xml,"+encodeURIComponent(svg);
+}
+function dotsSVG(pts){ return pts.map(p=>`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.1" fill="#333"/>`).join(''); }
+
+const STK='stroke="#d2322d" stroke-width="2" fill="none"';
+function gridOverlay(w,h){ let s=''; const n=3;
+  for(let i=1;i<n;i++){ s+=`<line x1="${(i*w/n).toFixed(1)}" y1="0" x2="${(i*w/n).toFixed(1)}" y2="${h}" ${STK}/>`;
+                         s+=`<line x1="0" y1="${(i*h/n).toFixed(1)}" x2="${w}" y2="${(i*h/n).toFixed(1)}" ${STK}/>`; }
+  return s; }
+function quadOverlay(w,h){ let s='';
+  s+=`<line x1="${w/2}" y1="0" x2="${w/2}" y2="${h}" ${STK}/>`;
+  s+=`<line x1="0" y1="${h/2}" x2="${w}" y2="${h/2}" ${STK}/>`;
+  s+=`<line x1="${3*w/4}" y1="0" x2="${3*w/4}" y2="${h/2}" ${STK}/>`;
+  s+=`<line x1="${w/2}" y1="${h/4}" x2="${w}" y2="${h/4}" ${STK}/>`;
+  s+=`<line x1="${w/4}" y1="${h/2}" x2="${w/4}" y2="${h}" ${STK}/>`;
+  s+=`<line x1="0" y1="${3*h/4}" x2="${w/2}" y2="${3*h/4}" ${STK}/>`;
+  return s; }
+function voronoiOverlay(w,h){ let s='';
+  s+=`<polyline points="${0.45*w},0 ${0.55*w},${0.35*h} ${0.40*w},${0.72*h} ${0.50*w},${h}" ${STK}/>`;
+  s+=`<polyline points="${0.55*w},${0.35*h} ${w},${0.45*h}" ${STK}/>`;
+  s+=`<polyline points="0,${0.60*h} ${0.40*w},${0.72*h}" ${STK}/>`;
+  s+=`<polyline points="${0.55*w},${0.35*h} ${0.70*w},0" ${STK}/>`;
+  return s; }
+function panel(pts,overlay,w,h){
+  const inner=`<rect x="0" y="0" width="${w}" height="${h}" fill="#f4f4f2"/>`+dotsSVG(pts)+(overlay||'');
+  return svgURI(inner,w,h);
+}
+
+/* ============================================================
+   CUSTOM PLUGIN: draw the natural crowd groups (freehand)
+   Records raw stroke coordinates; IoU vs each partition is
+   computed OFFLINE in Python, not here.
+   ============================================================ */
+const PT = jsPsychModule.ParameterType;
+class DrawGroupsPlugin {
+  static info = {
+    name: "draw-groups",
+    version: "1.0.0",
+    parameters: {
+      image_src:     { type: PT.STRING,      default: "" },
+      prompt:        { type: PT.HTML_STRING,  default: "" },
+      canvas_width:  { type: PT.INT,          default: 600 },
+      canvas_height: { type: PT.INT,          default: 450 },
+      image_id:      { type: PT.INT,          default: 0 }
+    },
+    data: {
+      strokes:       { type: PT.STRING },
+      n_strokes:     { type: PT.INT },
+      canvas_width:  { type: PT.INT },
+      canvas_height: { type: PT.INT },
+      image_id:      { type: PT.INT },
+      rt:            { type: PT.INT }
     }
+  };
+  constructor(jsPsych){ this.jsPsych = jsPsych; }
+  trial(display_element, trial){
+    const W = trial.canvas_width, H = trial.canvas_height;
+    display_element.innerHTML = `
+      ${trial.prompt}
+      <div><canvas id="dg-canvas" width="${W}" height="${H}"
+           style="border:1px solid #999;cursor:crosshair;touch-action:none;max-width:100%"></canvas></div>
+      <div style="margin-top:10px">
+        <button class="jspsych-btn" id="dg-undo">Undo last</button>
+        <button class="jspsych-btn" id="dg-clear">Clear all</button>
+        <button class="jspsych-btn" id="dg-done">Done</button>
+      </div>`;
+    const canvas = display_element.querySelector('#dg-canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    let strokes = [], cur = null, drawing = false;
+    const t0 = performance.now();
+
+    function redraw(){
+      ctx.clearRect(0,0,W,H);
+      if(img.complete && img.naturalWidth) ctx.drawImage(img,0,0,W,H);
+      ctx.lineWidth=3; ctx.strokeStyle='rgba(210,50,45,0.9)'; ctx.lineJoin='round'; ctx.lineCap='round';
+      const all = cur ? strokes.concat([cur]) : strokes;
+      for(const s of all){ if(s.length<1) continue; ctx.beginPath(); ctx.moveTo(s[0].x,s[0].y);
+        for(let i=1;i<s.length;i++) ctx.lineTo(s[i].x,s[i].y); ctx.stroke(); }
+    }
+    img.onload = redraw;
+    img.src = trial.image_src;
+
+    function pos(e){
+      const r = canvas.getBoundingClientRect();
+      const cx = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+      const cy = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
+      return { x: Math.round(cx*W/r.width), y: Math.round(cy*H/r.height) };
+    }
+    const start = (e)=>{ e.preventDefault(); drawing=true; cur=[pos(e)]; redraw(); };
+    const move  = (e)=>{ if(!drawing) return; e.preventDefault(); cur.push(pos(e)); redraw(); };
+    const end   = (e)=>{ if(!drawing) return; e.preventDefault(); if(cur&&cur.length>1) strokes.push(cur); cur=null; drawing=false; redraw(); };
+
+    canvas.addEventListener('mousedown',start);
+    canvas.addEventListener('mousemove',move);
+    window.addEventListener('mouseup',end);
+    canvas.addEventListener('touchstart',start,{passive:false});
+    canvas.addEventListener('touchmove',move,{passive:false});
+    canvas.addEventListener('touchend',end,{passive:false});
+
+    display_element.querySelector('#dg-undo').onclick  = ()=>{ strokes.pop(); redraw(); };
+    display_element.querySelector('#dg-clear').onclick = ()=>{ strokes=[]; redraw(); };
+    display_element.querySelector('#dg-done').onclick  = ()=>{
+      window.removeEventListener('mouseup',end);
+      const data = { strokes:JSON.stringify(strokes), n_strokes:strokes.length,
+                     canvas_width:W, canvas_height:H, image_id:trial.image_id,
+                     rt: Math.round(performance.now()-t0) };
+      display_element.innerHTML='';
+      this.jsPsych.finishTrial(data);
+    };
   }
+}
+
+/* ============================================================
+   EXPERIMENT
+   ============================================================ */
+const jsPsych = initJsPsych({
+  on_finish: () => { if (EXPERIMENT_ID === "REPLACE_WITH_DATAPIPE_ID") jsPsych.data.displayData(); }
 });
 
-// Unique participant id + filename
 const subject_id = jsPsych.randomization.randomID(10);
-jsPsych.data.addProperties({ subject_id });
+// Prolific params (harmless if absent now):
+jsPsych.data.addProperties({
+  subject_id,
+  prolific_pid: jsPsych.data.getURLVariable('PROLIFIC_PID') || null,
+  study_id:     jsPsych.data.getURLVariable('STUDY_ID')     || null,
+  session_id:   jsPsych.data.getURLVariable('SESSION_ID')   || null
+});
 const filename = `${subject_id}.csv`;
 
-const welcome = {
+/* ---- consent / intro ---- */
+const consent = {
   type: jsPsychHtmlButtonResponse,
-  stimulus: `<h2>Pipeline test</h2>
-    <p>A 30-second dummy survey to confirm that responses are recorded
-       and saved to the server.</p>
-    <p>Click <b>Start</b>.</p>`,
-  choices: ["Start"]
+  stimulus: `<h2>Crowd image study</h2>
+    <p style="text-align:left">You will see images of crowds divided into regions in different ways,
+    and you'll judge which division is clearest. You'll also mark crowd groups on a few images.
+    It takes about <b>10 minutes</b>. Participation is voluntary and anonymous; you may stop anytime.</p>
+    <p style="text-align:left">By clicking <b>I agree</b> you consent to take part.</p>`,
+  choices: ["I agree — start"]
 };
 
-const dummy_choice = {
+/* ---- BWS (primary) ---- */
+const bws_instr = {
   type: jsPsychHtmlButtonResponse,
-  stimulus: `<p style="font-size:18px">Dummy question: which option looks best?</p>`,
-  choices: ["A", "B", "C"],
-  data: { task: "dummy_bws" },
-  on_finish: (d) => { d.chosen = ["A", "B", "C"][d.response]; }
+  stimulus: `<h3>Part 1</h3>
+    <p style="text-align:left">Each screen shows the <b>same crowd</b> divided into regions in three ways (A, B, C).
+    The black dots are people. First pick the option that <b>best helps you understand where the crowd is and
+    how it is distributed</b>; then pick the <b>worst</b> one.</p>`,
+  choices: ["Got it"]
 };
 
-const dummy_text = {
-  type: jsPsychSurveyText,
-  questions: [{ prompt: "Type anything (dummy free-text):", rows: 2, name: "free" }],
-  data: { task: "dummy_text" }
+function bwsItem(i){
+  const w=240,h=180;
+  const pts = makeCrowd(1000+i,w,h);
+  const methods = [
+    { m:'grid',    src: panel(pts, gridOverlay(w,h),    w,h) },
+    { m:'quad',    src: panel(pts, quadOverlay(w,h),    w,h) },
+    { m:'voronoi', src: panel(pts, voronoiOverlay(w,h), w,h) }
+  ];
+  const order  = jsPsych.randomization.shuffle([0,1,2]);   // position -> method index
+  const layout = order.map(idx => methods[idx].m);         // method shown at A/B/C
+  const labels = ['A','B','C'];
+  const choices = order.map((idx,pos) =>
+    `<div class="panel-cap">${labels[pos]}</div><img class="panel" src="${methods[idx].src}" width="${w}" height="${h}">`);
+
+  const best = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: `<p><b>Which option (A/B/C) BEST helps you understand where the crowd is and how it is distributed?</b></p>`,
+    choices,
+    data: { task:'bws', phase:'best', image_id:i, layout: JSON.stringify(layout) },
+    on_finish: (d)=>{ d.best_pos=d.response; d.best_method=layout[d.response]; }
+  };
+  const worst = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: `<p><b>And which option is the WORST at showing where the crowd is?</b></p>`,
+    choices,
+    data: { task:'bws', phase:'worst', image_id:i, layout: JSON.stringify(layout) },
+    on_finish: (d)=>{ d.worst_pos=d.response; d.worst_method=layout[d.response]; }
+  };
+  return [best, worst];
+}
+const N_BWS = 4;   // placeholder; real study ~16 + attention checks
+const bws_block = [];
+for(let i=0;i<N_BWS;i++) bws_block.push(...bwsItem(i));
+// TODO: insert attention-check items (an obviously broken partition) into bws_block.
+
+/* ---- Boundary drawing (objective) ---- */
+const draw_instr = {
+  type: jsPsychHtmlButtonResponse,
+  stimulus: `<h3>Part 2</h3>
+    <p style="text-align:left">Now you'll see crowds with <b>no</b> regions drawn. With your mouse,
+    <b>draw a loop around each group of people you naturally see</b> (one loop per group).
+    Use <i>Undo</i>/<i>Clear</i> to fix mistakes, then click <b>Done</b>.</p>`,
+  choices: ["Got it"]
+};
+function drawTrial(i){
+  const W=600,H=450;
+  const pts = makeCrowd(2000+i,W,H);
+  return {
+    type: DrawGroupsPlugin,
+    image_src: panel(pts, null, W, H),
+    prompt: `<p><b>Draw a loop around each crowd group you see.</b></p>`,
+    canvas_width: W, canvas_height: H, image_id: i,
+    data: { task:'draw' }
+  };
+}
+const N_DRAW = 2;  // placeholder; real study ~3-4
+const draw_block = [];
+for(let i=0;i<N_DRAW;i++) draw_block.push(drawTrial(i));
+
+/* ---- post questionnaire (minimal) ---- */
+const lik = (name,q)=>`<p style="text-align:left">${q}</p><div style="margin-bottom:10px">`+
+  [1,2,3,4,5].map(v=>`<label class="lik">${v}<br><input type="radio" name="${name}" value="${v}" required></label>`).join('')+
+  `</div>`;
+const post = {
+  type: jsPsychSurveyHtmlForm,
+  preamble: `<h3>Almost done</h3><p>A few quick questions (1 = not at all, 5 = very).</p>`,
+  html: lik('trust','How much would you trust regional crowd counts based on the clearest division?')
+      + lik('clarity','Overall, how clear were the region divisions?')
+      + `<p style="text-align:left">Age: <input type="number" name="age" min="18" max="120" style="width:80px"></p>`
+      + `<p style="text-align:left">Role:
+          <select name="role">
+            <option value="public">General public</option>
+            <option value="police">Police</option>
+            <option value="fire">Fire / rescue</option>
+            <option value="security">Security</option>
+            <option value="other">Other</option>
+          </select></p>`,
+  data: { task:'post' }
 };
 
+/* ---- save + thanks ---- */
 const save_data = {
   type: jsPsychPipe,
   action: "save",
@@ -74,15 +288,14 @@ const save_data = {
   filename: filename,
   data_string: () => jsPsych.data.get().csv()
 };
-
 const thanks = {
   type: jsPsychHtmlButtonResponse,
-  stimulus: `<h3>Done — thank you!</h3><p>Your responses were recorded.</p>`,
+  stimulus: `<h3>Thank you!</h3><p>Your responses were recorded. You may close the tab.</p>`,
   choices: ["Finish"]
 };
 
-// Only attempt a save once a real Experiment ID is set.
-const timeline = [welcome, dummy_choice, dummy_text];
+/* ---- run ---- */
+const timeline = [ consent, bws_instr, ...bws_block, draw_instr, ...draw_block, post ];
 if (EXPERIMENT_ID !== "REPLACE_WITH_DATAPIPE_ID") timeline.push(save_data);
 timeline.push(thanks);
 
