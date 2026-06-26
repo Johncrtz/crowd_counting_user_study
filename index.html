@@ -69,8 +69,8 @@ const T = {
     token_invalid: "This token is not valid or has already been used.",
 
     consent_title: "Before we start",
-    intro_context: "<p style='text-align:left'>When monitoring large crowds on video, it matters <b>where</b> and how many people are present — for example, to spot dangerous crowding at events early. This is helped by dividing an image into meaningful areas: separating dense from less dense zones, or telling individual groups of people apart. The more understandable such a division is to a human, the more one can trust the numbers derived from it.</p>",
-    consent_body: "<p style='text-align:left'>You will see images of crowds that you first divide into groups yourself. Afterwards, you will see several predefined divisions, which you rate by how meaningful they are. It takes about <b>10 minutes</b>.</p><p style='text-align:left'>Participation is <b>voluntary</b> and you may stop at any time. All responses are <b>fully anonymous</b> — we never collect your name, email or IP. Data are processed for scientific research only, in accordance with the EU <b>GDPR (DSGVO)</b>, and may be published in aggregated form.</p>",
+    intro_context: "<p style='text-align:left'>When monitoring large crowds on video, it matters <b>where</b> and how many people are present — for example, to spot dangerous crowding at events early. This is helped by dividing an image into meaningful areas: separating dense from less dense zones, or telling individual groups of people apart. The more understandable such a division is to a human, the more one can trust the numbers derived from it.</p><p style='text-align:left'>In this study, we ask you to first divide crowd images yourself and then rate several predefined divisions by how meaningful they are. The study takes about <b>10 minutes</b>; after you finish, your access expires.</p>",
+    consent_body: "<p style='text-align:left'>Participation is <b>voluntary</b> and you may stop at any time. All responses are <b>fully anonymous</b> — we never collect your name, email or IP. Data are processed for scientific research only, in accordance with the EU <b>GDPR (DSGVO)</b>, and may be published in aggregated form.</p>",
     consent_agree: "I have read this and agree to take part",
 
     demo_title: "A few details about you",
@@ -100,12 +100,18 @@ const T = {
     derr_none: "Please draw at least one dividing line that splits the crowd.",
     derr_many: "That is too many lines. Please use at most {M}.",
 
-    post_title: "Almost done — your overall impression",
-    post_intro: "<p style='text-align:left'>These questions are about the <b>region divisions</b> you just saw (the lines splitting each crowd into regions). Please answer for divisions <i>in general</i>, on a scale from 1 to 5.</p>",
-    q_clarity: "Overall, how <b>clear and easy to understand</b> were the region divisions you saw? (1 = very unclear, 5 = very clear)",
-    q_trust: "Imagine the system reports a crowd count <b>per region</b>. How much would you <b>trust</b> those regional counts? (1 = not at all, 5 = completely)",
-    q_pref: "For real public-safety monitoring, how <b>useful</b> would such region divisions be to support decisions? (1 = useless, 5 = very useful)",
-    lik_lo: "low", lik_hi: "high",
+    post1_title: "Almost done — a short reflection",
+    conf_q: "How <b>sure</b> were you of your decisions?",
+    conf_lo: "not at all", conf_hi: "very sure",
+    open_q: "In one sentence: what made a division <b>clear</b> — or <b>confusing</b> — to you?",
+    open_ph: "Your answer…",
+    post2_title: "One more scenario",
+    sys_intro: "<p style='text-align:left'>Imagine a <b>System A</b> that divides images of crowds into regions, and a second <b>System B</b> that evaluates those regions and provides, for each, an estimate of the number of people / the crowd density. In the end you see the divided image including the per-region estimates, and may have to make a decision based on it.</p>",
+    q_depend: "In your estimation, how strongly does the <b>accuracy of B</b> depend on the <b>quality of A's division</b>?",
+    q_trust2: "Imagine you worked with such a system yourself. How much does your <b>trust</b> in the system's outputs depend on <b>how understandable</b> the image division is?",
+    q_useful: "How <b>useful</b> would such a system be for real public-safety monitoring to support decisions?",
+    anch_no: "not at all", anch_strong: "very strongly",
+    anch_useless: "useless", anch_useful: "very useful",
 
     thanks_title: "Thank you!", thanks_body: "Your responses have been saved. You may now close this tab.",
     saving: "Saving your data — please do not close this page…"
@@ -121,8 +127,8 @@ const T = {
     token_invalid: "Dieser Token ist ungültig oder wurde bereits verwendet.",
 
     consent_title: "Bevor es losgeht",
-    intro_context: "<p style='text-align:left'>In der Videoüberwachung großer Menschenmengen ist es wichtig zu erfassen, <b>wo</b> sich wie viele Menschen befinden — etwa um bei Veranstaltungen gefährliche Gedrängesituationen früh zu erkennen. Dabei hilft es, ein Bild in sinnvolle Bereiche zu unterteilen: dichte und weniger dichte Zonen oder einzelne Personengruppen voneinander zu trennen. Je nachvollziehbarer eine solche Unterteilung für den Menschen ist, desto eher kann man den daraus abgeleiteten Zahlen vertrauen.</p>",
-    consent_body: "<p style='text-align:left'>Sie sehen Bilder von Menschenmengen, die Sie zunächst selbst in Gruppen unterteilen. Anschließend sehen Sie verschiedene vorgegebene Aufteilungen, die Sie nach ihrer Sinnhaftigkeit bewerten. Es dauert etwa <b>10 Minuten</b>.</p><p style='text-align:left'>Die Teilnahme ist <b>freiwillig</b> und kann jederzeit abgebrochen werden. Alle Antworten sind <b>vollständig anonym</b> — wir erheben weder Namen, E-Mail noch IP-Adresse. Die Daten werden ausschließlich zu wissenschaftlichen Zwecken gemäß <b>DSGVO</b> verarbeitet und ggf. in aggregierter Form veröffentlicht.</p>",
+    intro_context: "<p style='text-align:left'>In der Videoüberwachung großer Menschenmengen ist es wichtig zu erfassen, <b>wo</b> sich wie viele Menschen befinden — etwa um bei Veranstaltungen gefährliche Gedrängesituationen früh zu erkennen. Dabei hilft es, ein Bild in sinnvolle Bereiche zu unterteilen: dichte und weniger dichte Zonen oder einzelne Personengruppen voneinander zu trennen. Je nachvollziehbarer eine solche Unterteilung für den Menschen ist, desto eher kann man den daraus abgeleiteten Zahlen vertrauen.</p><p style='text-align:left'>In der folgenden Studie bitten wir Sie, selbst Bilder von Menschenmengen zu unterteilen sowie verschiedene vorgegebene Unterteilungen nach ihrer Sinnhaftigkeit zu bewerten. Die Teilnahme an der Studie dauert ca. 10 Minuten; nach Abschluss erlischt Ihr Zugang.</p>",
+    consent_body: "<p style='text-align:left'>Die Teilnahme ist <b>freiwillig</b> und kann jederzeit abgebrochen werden. Alle Antworten sind <b>vollständig anonym</b> — wir erheben weder Namen, E-Mail noch IP-Adresse. Die Daten werden ausschließlich zu wissenschaftlichen Zwecken gemäß <b>DSGVO</b> verarbeitet und ggf. in aggregierter Form veröffentlicht.</p>",
     consent_agree: "Ich habe dies gelesen und nehme teil",
 
     demo_title: "Ein paar Angaben zu Ihnen",
@@ -152,12 +158,18 @@ const T = {
     derr_none: "Bitte zeichnen Sie mindestens eine Trennlinie, die die Menge unterteilt.",
     derr_many: "Das sind zu viele Linien. Bitte verwenden Sie höchstens {M}.",
 
-    post_title: "Fast geschafft — Ihr Gesamteindruck",
-    post_intro: "<p style='text-align:left'>Diese Fragen beziehen sich auf die <b>Regionen-Aufteilungen</b>, die Sie gerade gesehen haben (die Linien, die jede Menge in Regionen teilen). Bitte antworten Sie <i>allgemein</i> auf einer Skala von 1 bis 5.</p>",
-    q_clarity: "Wie <b>klar und verständlich</b> waren die gesehenen Aufteilungen insgesamt? (1 = sehr unklar, 5 = sehr klar)",
-    q_trust: "Angenommen, das System meldet eine Personenzahl <b>pro Region</b>. Wie sehr würden Sie diesen regionalen Zahlen <b>vertrauen</b>? (1 = gar nicht, 5 = voll und ganz)",
-    q_pref: "Wie <b>nützlich</b> wären solche Aufteilungen für reales Sicherheits-Monitoring zur Entscheidungsunterstützung? (1 = nutzlos, 5 = sehr nützlich)",
-    lik_lo: "niedrig", lik_hi: "hoch",
+    post1_title: "Fast geschafft — eine kurze Reflexion",
+    conf_q: "Wie <b>sicher</b> waren Sie sich bei Ihren Entscheidungen?",
+    conf_lo: "gar nicht", conf_hi: "sehr sicher",
+    open_q: "In einem Satz: Was machte eine Aufteilung für Sie <b>nachvollziehbar</b> — oder <b>verwirrend</b>?",
+    open_ph: "Ihre Antwort…",
+    post2_title: "Noch ein Szenario",
+    sys_intro: "<p style='text-align:left'>Stellen Sie sich ein <b>System A</b> vor, das Bilder von Menschengruppen in Regionen aufteilt, und ein zweites <b>System B</b>, das diese Regionen auswertet und für jede eine Schätzung der Personenanzahl bzw. Menschendichte liefert. Am Ende sehen Sie das aufgeteilte Bild inklusive der Schätzungen pro Region und müssen gegebenenfalls auf dieser Grundlage eine Entscheidung treffen.</p>",
+    q_depend: "Wie stark hängt Ihrer Einschätzung nach die <b>Genauigkeit der Ergebnisse von B</b> von der <b>Qualität der Aufteilung durch A</b> ab?",
+    q_trust2: "Stellen Sie sich vor, Sie würden selbst mit einem solchen System arbeiten. Wie sehr hängt Ihr <b>Vertrauen</b> in die Aussagen des Systems davon ab, wie <b>nachvollziehbar</b> die Bildaufteilung ist?",
+    q_useful: "Wie <b>nützlich</b> wäre ein solches System für reales Sicherheits-Monitoring zur Entscheidungsunterstützung?",
+    anch_no: "gar nicht", anch_strong: "sehr stark",
+    anch_useless: "nutzlos", anch_useful: "sehr nützlich",
 
     thanks_title: "Vielen Dank!", thanks_body: "Ihre Antworten wurden gespeichert. Sie können diesen Tab jetzt schließen.",
     saving: "Daten werden gespeichert — bitte diese Seite nicht schließen…"
@@ -425,7 +437,7 @@ const token_gate = {
 // 2) consent + privacy
 const consent = {
   type: jsPsychHtmlButtonResponse,
-  stimulus: ()=>`${t('intro_context')}<h2>${t('consent_title')}</h2>${t('consent_body')}`,
+  stimulus: ()=>`<h2>${t('consent_title')}</h2>${t('intro_context')}${t('consent_body')}`,
   choices: ()=>[t('consent_agree')]
 };
 
@@ -533,17 +545,32 @@ function drawTrial(stim, isPractice=false){
 }
 
 // 6) post questionnaire (finalized, all required)
-const likert = (name,q)=>`<div class="form-row">${q}</div><div style="margin-bottom:14px">`+
-  `<span style="font-size:12px;color:#888">${'{LO}'}</span> `+
+const likert = (name,q,lo,hi)=>`<div class="form-row">${q}</div><div style="margin-bottom:14px">`+
+  `<span style="font-size:12px;color:#888">1 · ${lo}</span> `+
   [1,2,3,4,5].map(v=>`<label class="lik">${v}<br><input type="radio" name="${name}" value="${v}" required></label>`).join('')+
-  ` <span style="font-size:12px;color:#888">${'{HI}'}</span></div>`;
-const post = {
+  ` <span style="font-size:12px;color:#888">5 · ${hi}</span></div>`;
+
+// Page 1 (lay + expert): confidence (quality check) + open-ended (why)
+const post1 = {
   type: jsPsychSurveyHtmlForm,
-  preamble: ()=>`<h3>${t('post_title')}</h3>${t('post_intro')}`,
+  preamble: ()=>`<h3>${t('post1_title')}</h3>`,
+  button_label: ()=>t('continue'),
+  html: ()=> likert('confidence', t('conf_q'), t('conf_lo'), t('conf_hi'))
+    + `<div class="form-row" style="margin-top:6px">${t('open_q')}<br>`
+    + `<textarea name="open" rows="2" required placeholder="${t('open_ph')}"`
+    + ` style="width:100%;max-width:560px;font-size:15px;padding:5px"></textarea></div>`,
+  data: { task:'post_reflection' }
+};
+
+// Page 2 (lay + expert): System A/B scenario + 3 ratings
+const post2 = {
+  type: jsPsychSurveyHtmlForm,
+  preamble: ()=>`<h3>${t('post2_title')}</h3>${t('sys_intro')}`,
   button_label: ()=>t('finish'),
-  html: ()=> (likert('clarity',t('q_clarity')) + likert('trust',t('q_trust')) + likert('pref',t('q_pref')))
-              .replaceAll('{LO}', t('lik_lo')).replaceAll('{HI}', t('lik_hi')),
-  data: { task:'post' }
+  html: ()=> likert('depend', t('q_depend'),  t('anch_no'),      t('anch_strong'))
+           + likert('trust',  t('q_trust2'),  t('anch_no'),      t('anch_strong'))
+           + likert('useful', t('q_useful'),  t('anch_useless'), t('anch_useful')),
+  data: { task:'post_scenario' }
 };
 
 // 7) save + mark token used + thanks
@@ -596,7 +623,7 @@ const preload = { type: jsPsychPreload, images: preload_imgs, show_progress_bar:
                   continue_after_error:true, message:"Loading images… / Bilder werden geladen…" };
 
 const timeline = [ lang, token_gate, consent, demographics, preload,
-                   draw_instr, ...draw_block, bws_instr, ...bws_block, post ];
+                   draw_instr, ...draw_block, bws_instr, ...bws_block, post1, post2 ];
 if(EXPERIMENT_ID!=="REPLACE_WITH_DATAPIPE_ID"){ timeline.push(save_data, finalize_token); }
 timeline.push(thanks);
 
