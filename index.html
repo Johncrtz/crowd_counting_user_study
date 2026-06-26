@@ -62,13 +62,15 @@ const T = {
     continue: "Continue", got_it: "Got it", finish: "Finish",
     help_btn: "?", help_title: "Instructions", help_close: "Close",
     practice: "PRACTICE — this one does not count",
+    img_source: "Image source",
 
     token_prompt: "<h2>Welcome</h2><p>Please enter the personal access token you received from the researcher.</p>",
     token_btn: "Start", token_empty: "Please enter your token.",
     token_invalid: "This token is not valid or has already been used.",
 
     consent_title: "Before we start",
-    consent_body: "<p style='text-align:left'>You will see images of crowds divided into regions in different ways and judge which division is clearest. You will also mark crowd groups on a few images. It takes about <b>10 minutes</b>.</p><p style='text-align:left'>Participation is <b>voluntary</b> and you may stop at any time. All responses are <b>fully anonymous</b> — we never collect your name, email or IP. Data are processed for scientific research only, in accordance with the EU <b>GDPR (DSGVO)</b>, and may be published in aggregated form.</p>",
+    intro_context: "<p style='text-align:left'>When monitoring large crowds on video, it matters <b>where</b> and how many people are present — for example, to spot dangerous crowding at events early. This is helped by dividing an image into meaningful areas: separating dense from less dense zones, or telling individual groups of people apart. The more understandable such a division is to a human, the more one can trust the numbers derived from it.</p>",
+    consent_body: "<p style='text-align:left'>You will see images of crowds that you first divide into groups yourself. Afterwards, you will see several predefined divisions, which you rate by how meaningful they are. It takes about <b>10 minutes</b>.</p><p style='text-align:left'>Participation is <b>voluntary</b> and you may stop at any time. All responses are <b>fully anonymous</b> — we never collect your name, email or IP. Data are processed for scientific research only, in accordance with the EU <b>GDPR (DSGVO)</b>, and may be published in aggregated form.</p>",
     consent_agree: "I have read this and agree to take part",
 
     demo_title: "A few details about you",
@@ -76,31 +78,27 @@ const T = {
     demo_age: "Age", demo_gender: "Gender",
     g_f: "Female", g_m: "Male", g_d: "Diverse", g_na: "Prefer not to say",
     demo_role: "Your role",
-    r_public: "General public", r_police: "Police", r_fire: "Fire / rescue", r_security: "Security", r_other: "Other",
+    r_public: "General public", r_student: "Student", r_police: "Police", r_fire: "Fire / rescue", r_security: "Security", r_other: "Other",
     demo_vision: "Vision", v_normal: "Normal", v_corrected: "Corrected (glasses/lenses)",
     demo_exp: "Prior experience with crowd monitoring?", yes: "Yes", no: "No",
     choose: "— please choose —",
     demo_truthful: "I confirm that I will answer all questions truthfully and to the best of my knowledge.",
 
-    bws_title: "Part 1 of 2 — Clearest division",
-    bws_body: "<p style='text-align:left'>Each screen shows the <b>same crowd</b> divided into regions in three ways (A, B, C). The black dots are people. First pick the division that <b>best</b> helps you understand where the crowd is; then pick the <b>worst</b>.</p>",
-    bws_best: "Which option (A / B / C) is the <span class='best'>BEST</span> at showing where the crowd is and how it is distributed?",
-    bws_worst: "And which option is the <span class='worst'>WORST</span> at showing where the crowd is?",
+    bws_title: "Part 2 of 2 — Most meaningful division",
+    bws_body: "<p style='text-align:left'>Each screen shows the <b>same crowd</b> divided in three ways (A, B, C). Choose the division that best separates the crowd — or, where applicable, the different groups of people in the image. Possible criteria are, for example, <b>position</b> (groups are spread out across the image) or crowd <b>density</b> (the crowd goes from very dense to less dense). First pick the division that seems <b>most meaningful</b> to you, then the <b>worst</b> one.</p>",
+    bws_best: "Which option (A / B / C) divides the crowd the <span class='best'>BEST</span>?",
+    bws_worst: "And which option (A / B / C) does it the <span class='worst'>WORST</span>?",
     bws_worst_note: "(the option you chose as best is greyed out)",
 
-    draw_title: "Part 2 of 2 — Mark the crowd groups",
-    draw_body: "<p style='text-align:left'>Now you will see crowds with <b>no</b> regions drawn. Draw a <b>closed loop around each group of people</b> you naturally see — one loop per group. Each loop must be <b>fully closed</b> (start and end meet) and must <b>not cross itself</b>.</p>",
+    draw_title: "Part 1 of 2 — Divide the image into regions",
+    draw_body: "<p style='text-align:left'>Now you will see crowds with <b>no</b> lines drawn. Draw <b>dividing lines</b> that split the image into meaningful regions, so that each region holds a part of the crowd that belongs together. Use, for example, the <b>position</b> of the groups, or where the crowd goes from <b>dense to less dense</b>. You can draw several lines.</p>",
     draw_examples: "Examples",
-    ex_good: "Good: one closed loop per group",
-    ex_open: "Wrong: not closed / a line",
-    ex_cross: "Wrong: loop crosses itself",
-    ex_many: "Wrong: far too many tiny loops",
-    draw_hint: "Draw one closed loop around each group of people you see.",
+    ex_good: "Good: a few dividing lines along groups / density changes",
+    ex_many: "Wrong: far too many, arbitrary lines",
+    draw_hint: "Draw dividing lines that split the crowd into meaningful regions.",
     draw_undo: "Undo last", draw_clear: "Clear all", draw_done: "Done",
-    derr_none: "Please draw at least one closed loop around a group.",
-    derr_open: "A loop is not closed (or is just a line). Each loop must enclose an area — please redraw it.",
-    derr_cross: "A loop crosses itself (like a figure-8). Please draw simple, non-crossing loops.",
-    derr_many: "That is more loops than groups in this image. Please use one loop per group (max {M}).",
+    derr_none: "Please draw at least one dividing line that splits the crowd.",
+    derr_many: "That is too many lines. Please use at most {M}.",
 
     post_title: "Almost done — your overall impression",
     post_intro: "<p style='text-align:left'>These questions are about the <b>region divisions</b> you just saw (the lines splitting each crowd into regions). Please answer for divisions <i>in general</i>, on a scale from 1 to 5.</p>",
@@ -116,58 +114,68 @@ const T = {
     continue: "Weiter", got_it: "Verstanden", finish: "Fertig",
     help_btn: "?", help_title: "Anleitung", help_close: "Schließen",
     practice: "ÜBUNG — dieser Durchgang zählt nicht",
+    img_source: "Bildquelle",
 
-    token_prompt: "<h2>Willkommen</h2><p>Bitte gib den persönlichen Zugangs-Token ein, den du von der Studienleitung erhalten hast.</p>",
-    token_btn: "Starten", token_empty: "Bitte gib deinen Token ein.",
+    token_prompt: "<h2>Willkommen</h2><p>Bitte geben Sie den persönlichen Zugangs-Token ein, den Sie von der Studienleitung erhalten haben.</p>",
+    token_btn: "Starten", token_empty: "Bitte geben Sie Ihren Token ein.",
     token_invalid: "Dieser Token ist ungültig oder wurde bereits verwendet.",
 
     consent_title: "Bevor es losgeht",
-    consent_body: "<p style='text-align:left'>Du siehst Bilder von Menschenmengen, die auf unterschiedliche Weise in Regionen aufgeteilt sind, und beurteilst, welche Aufteilung am verständlichsten ist. Außerdem markierst du auf einigen Bildern Personengruppen. Es dauert etwa <b>10 Minuten</b>.</p><p style='text-align:left'>Die Teilnahme ist <b>freiwillig</b> und kann jederzeit abgebrochen werden. Alle Antworten sind <b>vollständig anonym</b> — wir erheben weder Namen, E-Mail noch IP-Adresse. Die Daten werden ausschließlich zu wissenschaftlichen Zwecken gemäß <b>DSGVO</b> verarbeitet und ggf. in aggregierter Form veröffentlicht.</p>",
+    intro_context: "<p style='text-align:left'>In der Videoüberwachung großer Menschenmengen ist es wichtig zu erfassen, <b>wo</b> sich wie viele Menschen befinden — etwa um bei Veranstaltungen gefährliche Gedrängesituationen früh zu erkennen. Dabei hilft es, ein Bild in sinnvolle Bereiche zu unterteilen: dichte und weniger dichte Zonen oder einzelne Personengruppen voneinander zu trennen. Je nachvollziehbarer eine solche Unterteilung für den Menschen ist, desto eher kann man den daraus abgeleiteten Zahlen vertrauen.</p>",
+    consent_body: "<p style='text-align:left'>Sie sehen Bilder von Menschenmengen, die Sie zunächst selbst in Gruppen unterteilen. Anschließend sehen Sie verschiedene vorgegebene Aufteilungen, die Sie nach ihrer Sinnhaftigkeit bewerten. Es dauert etwa <b>10 Minuten</b>.</p><p style='text-align:left'>Die Teilnahme ist <b>freiwillig</b> und kann jederzeit abgebrochen werden. Alle Antworten sind <b>vollständig anonym</b> — wir erheben weder Namen, E-Mail noch IP-Adresse. Die Daten werden ausschließlich zu wissenschaftlichen Zwecken gemäß <b>DSGVO</b> verarbeitet und ggf. in aggregierter Form veröffentlicht.</p>",
     consent_agree: "Ich habe dies gelesen und nehme teil",
 
-    demo_title: "Ein paar Angaben zu dir",
+    demo_title: "Ein paar Angaben zu Ihnen",
     demo_intro: "<p style='text-align:left'>Diese Angaben werden anonym erhoben (DSGVO) und nur in zusammengefasster Form zur Beschreibung der Stichprobe verwendet.</p>",
     demo_age: "Alter", demo_gender: "Geschlecht",
     g_f: "Weiblich", g_m: "Männlich", g_d: "Divers", g_na: "Keine Angabe",
-    demo_role: "Deine Rolle",
-    r_public: "Allgemeine Öffentlichkeit", r_police: "Polizei", r_fire: "Feuerwehr / Rettung", r_security: "Sicherheitsdienst", r_other: "Sonstige",
+    demo_role: "Ihre Rolle",
+    r_public: "Allgemeine Öffentlichkeit", r_student: "Studentin / Student", r_police: "Polizei", r_fire: "Feuerwehr / Rettung", r_security: "Sicherheitsdienst", r_other: "Sonstige",
     demo_vision: "Sehvermögen", v_normal: "Normal", v_corrected: "Korrigiert (Brille/Linsen)",
     demo_exp: "Vorerfahrung mit Crowd-Monitoring?", yes: "Ja", no: "Nein",
     choose: "— bitte wählen —",
     demo_truthful: "Ich bestätige, dass ich alle Fragen wahrheitsgemäß und nach bestem Wissen beantworte.",
 
-    bws_title: "Teil 1 von 2 — Klarste Aufteilung",
-    bws_body: "<p style='text-align:left'>Jeder Bildschirm zeigt <b>dieselbe</b> Menschenmenge, auf drei Arten in Regionen aufgeteilt (A, B, C). Die schwarzen Punkte sind Personen. Wähle zuerst die Aufteilung, die <b>am besten</b> zeigt, wo die Menge ist; dann die <b>schlechteste</b>.</p>",
-    bws_best: "Welche Option (A / B / C) zeigt <span class='best'>AM BESTEN</span>, wo die Menschenmenge ist und wie sie verteilt ist?",
-    bws_worst: "Und welche Option zeigt <span class='worst'>AM SCHLECHTESTEN</span>, wo die Menschenmenge ist?",
+    bws_title: "Teil 2 von 2 — Sinnvollste Aufteilung",
+    bws_body: "<p style='text-align:left'>Jeder Bildschirm zeigt <b>dieselbe</b> Menschenmenge, auf drei Arten aufgeteilt (A, B, C). Wählen Sie die Aufteilung, die die Menge – oder gegebenenfalls die verschiedenen Gruppen von Menschen im Bild – am besten unterteilt. Mögliche Kriterien sind zum Beispiel die <b>Position</b> (Gruppen sind örtlich über das Bild verteilt) oder die <b>Dichte</b> der Menschenmenge (die Menge geht von sehr dicht zu weniger dicht über). Wählen Sie zuerst die Aufteilung, die Ihnen <b>am sinnvollsten</b> erscheint, danach die <b>schlechteste</b>.</p>",
+    bws_best: "Welche Option (A / B / C) unterteilt die Menschenmenge <span class='best'>AM BESTEN</span>?",
+    bws_worst: "Und welche Option (A / B / C) macht es <span class='worst'>AM SCHLECHTESTEN</span>?",
     bws_worst_note: "(die zuvor als beste gewählte Option ist ausgegraut)",
 
-    draw_title: "Teil 2 von 2 — Personengruppen markieren",
-    draw_body: "<p style='text-align:left'>Jetzt siehst du Menschenmengen <b>ohne</b> eingezeichnete Regionen. Zeichne eine <b>geschlossene Schleife um jede Gruppe</b> von Personen, die du erkennst — eine Schleife pro Gruppe. Jede Schleife muss <b>vollständig geschlossen</b> sein (Anfang und Ende treffen sich) und darf sich <b>nicht selbst kreuzen</b>.</p>",
+    draw_title: "Teil 1 von 2 — Bild in Regionen unterteilen",
+    draw_body: "<p style='text-align:left'>Jetzt sehen Sie Menschenmengen <b>ohne</b> eingezeichnete Linien. Zeichnen Sie selbst <b>Trennlinien</b>, die das Bild in sinnvolle Regionen unterteilen — so, dass jede Region einen zusammengehörigen Teil der Menge enthält. Orientieren Sie sich zum Beispiel an der <b>Position</b> der Gruppen oder daran, wo die Menge von <b>dicht zu weniger dicht</b> übergeht. Sie können mehrere Linien ziehen.</p>",
     draw_examples: "Beispiele",
-    ex_good: "Gut: eine geschlossene Schleife pro Gruppe",
-    ex_open: "Falsch: nicht geschlossen / eine Linie",
-    ex_cross: "Falsch: Schleife kreuzt sich selbst",
-    ex_many: "Falsch: viel zu viele winzige Schleifen",
-    draw_hint: "Zeichne eine geschlossene Schleife um jede Gruppe von Personen, die du siehst.",
+    ex_good: "Gut: wenige Trennlinien entlang der Gruppen / Dichteübergänge",
+    ex_many: "Falsch: viel zu viele, willkürliche Linien",
+    draw_hint: "Zeichnen Sie Trennlinien, die die Menschenmenge in sinnvolle Regionen aufteilen.",
     draw_undo: "Letzte zurück", draw_clear: "Alles löschen", draw_done: "Fertig",
-    derr_none: "Bitte zeichne mindestens eine geschlossene Schleife um eine Gruppe.",
-    derr_open: "Eine Schleife ist nicht geschlossen (oder nur eine Linie). Jede Schleife muss eine Fläche umschließen — bitte neu zeichnen.",
-    derr_cross: "Eine Schleife kreuzt sich selbst (wie eine 8). Bitte zeichne einfache, nicht-kreuzende Schleifen.",
-    derr_many: "Das sind mehr Schleifen als Gruppen im Bild. Bitte eine Schleife pro Gruppe (max. {M}).",
+    derr_none: "Bitte zeichnen Sie mindestens eine Trennlinie, die die Menge unterteilt.",
+    derr_many: "Das sind zu viele Linien. Bitte verwenden Sie höchstens {M}.",
 
-    post_title: "Fast geschafft — dein Gesamteindruck",
-    post_intro: "<p style='text-align:left'>Diese Fragen beziehen sich auf die <b>Regionen-Aufteilungen</b>, die du gerade gesehen hast (die Linien, die jede Menge in Regionen teilen). Bitte antworte <i>allgemein</i> auf einer Skala von 1 bis 5.</p>",
+    post_title: "Fast geschafft — Ihr Gesamteindruck",
+    post_intro: "<p style='text-align:left'>Diese Fragen beziehen sich auf die <b>Regionen-Aufteilungen</b>, die Sie gerade gesehen haben (die Linien, die jede Menge in Regionen teilen). Bitte antworten Sie <i>allgemein</i> auf einer Skala von 1 bis 5.</p>",
     q_clarity: "Wie <b>klar und verständlich</b> waren die gesehenen Aufteilungen insgesamt? (1 = sehr unklar, 5 = sehr klar)",
-    q_trust: "Angenommen, das System meldet eine Personenzahl <b>pro Region</b>. Wie sehr würdest du diesen regionalen Zahlen <b>vertrauen</b>? (1 = gar nicht, 5 = voll und ganz)",
+    q_trust: "Angenommen, das System meldet eine Personenzahl <b>pro Region</b>. Wie sehr würden Sie diesen regionalen Zahlen <b>vertrauen</b>? (1 = gar nicht, 5 = voll und ganz)",
     q_pref: "Wie <b>nützlich</b> wären solche Aufteilungen für reales Sicherheits-Monitoring zur Entscheidungsunterstützung? (1 = nutzlos, 5 = sehr nützlich)",
     lik_lo: "niedrig", lik_hi: "hoch",
 
-    thanks_title: "Vielen Dank!", thanks_body: "Deine Antworten wurden gespeichert. Du kannst diesen Tab jetzt schließen.",
+    thanks_title: "Vielen Dank!", thanks_body: "Ihre Antworten wurden gespeichert. Sie können diesen Tab jetzt schließen.",
     saving: "Daten werden gespeichert — bitte diese Seite nicht schließen…"
   }
 };
 const t = (k) => T[L][k];
+
+// image-source attribution (publisher page per source dataset; shown small under each stimulus)
+const SRC = {
+  JHU:  { n:"JHU-CROWD++",         u:"http://www.crowd-counting.com/" },
+  NWPU: { n:"NWPU-Crowd",          u:"https://www.crowdbenchmark.com/" },
+  ST_A: { n:"ShanghaiTech Part A", u:"https://github.com/desenzhou/ShanghaiTechDataset" },
+  ST_B: { n:"ShanghaiTech Part B", u:"https://github.com/desenzhou/ShanghaiTechDataset" },
+  UCF:  { n:"UCF-QNRF",            u:"https://www.crcv.ucf.edu/data/ucf-qnrf/" }
+};
+function srcLine(ds){ const s=SRC[ds]; if(!s) return '';
+  return `<div style="font-size:11px;color:#999;margin-top:8px">${t('img_source')}: `+
+         `<a href="${s.u}" target="_blank" rel="noopener" style="color:#999">${s.n}</a></div>`; }
 
 /* ===========================================================================
    TOKEN validation (JSONP — avoids CORS with a Google Apps Script backend)
@@ -218,7 +226,9 @@ function svgURI(inner,w,h){
   return "data:image/svg+xml,"+encodeURIComponent(svg);
 }
 function dotsSVG(pts){ return pts.map(p=>`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.1" fill="#333"/>`).join(''); }
-const STK='stroke="#d2322d" stroke-width="2" fill="none"';
+// dark core + white casing (hue-independent, color-vision-deficiency safe), to match the rendered stimuli
+const STK ='stroke="#111111" stroke-width="2.4" fill="none" stroke-linecap="round"';   // dark core
+const STKH='stroke="#ffffff" stroke-width="5"   fill="none" stroke-linecap="round"';   // white casing
 function gridOverlay(w,h){ let s=''; const n=3;
   for(let i=1;i<n;i++){ s+=`<line x1="${(i*w/n).toFixed(1)}" y1="0" x2="${(i*w/n).toFixed(1)}" y2="${h}" ${STK}/>`;
                         s+=`<line x1="0" y1="${(i*h/n).toFixed(1)}" x2="${w}" y2="${(i*h/n).toFixed(1)}" ${STK}/>`; } return s; }
@@ -238,16 +248,17 @@ function panel(pts,overlay,w,h){
   const inner=`<rect x="0" y="0" width="${w}" height="${h}" fill="#f4f4f2"/>`+dotsSVG(pts)+(overlay||'');
   return svgURI(inner,w,h);
 }
-// small example illustrations for the draw instructions
-function exGood(){ const w=150,h=110; const pts=makeCrowd(9,w,h,1);
-  return svgURI(`<rect width="${w}" height="${h}" fill="#f4f4f2"/>${dotsSVG(pts)}<ellipse cx="${w/2}" cy="${h/2}" rx="46" ry="38" fill="none" stroke="#1a8a3a" stroke-width="3"/>`,w,h); }
-function exOpen(){ const w=150,h=110; const pts=makeCrowd(9,w,h,1);
-  return svgURI(`<rect width="${w}" height="${h}" fill="#f4f4f2"/>${dotsSVG(pts)}<path d="M30,80 Q75,20 120,75" fill="none" stroke="#c0392b" stroke-width="3"/>`,w,h); }
-function exCross(){ const w=150,h=110;
-  return svgURI(`<rect width="${w}" height="${h}" fill="#f4f4f2"/><path d="M40,40 C120,40 30,90 110,90 C30,90 120,40 40,40 Z" fill="none" stroke="#c0392b" stroke-width="3"/>`,w,h); }
-function exMany(){ const w=150,h=110; const pts=makeCrowd(9,w,h,1); let c='';
-  for(let i=0;i<8;i++){ const x=30+(i%4)*30, y=40+Math.floor(i/4)*35; c+=`<circle cx="${x}" cy="${y}" r="12" fill="none" stroke="#c0392b" stroke-width="2.5"/>`; }
-  return svgURI(`<rect width="${w}" height="${h}" fill="#f4f4f2"/>${dotsSVG(pts)}${c}`,w,h); }
+// example illustrations for the draw instructions:
+// a few sensible dividing lines vs. too many arbitrary ones
+function exLines(L){ return k=>L.map(([a,b,c,d])=>`<line x1="${a}" y1="${b}" x2="${c}" y2="${d}" ${k}/>`).join(''); }
+function exPartGood(){ const w=150,h=110; const pts=makeCrowd(7,w,h,2);
+  const ln=exLines([[80,0,66,110],[66,60,150,72]]);
+  return svgURI(`<rect width="${w}" height="${h}" fill="#f4f4f2"/>${dotsSVG(pts)}${ln(STKH)}${ln(STK)}`,w,h); }
+function exPartMany(){ const w=150,h=110; const pts=makeCrowd(7,w,h,2); const L=[];
+  for(let i=1;i<6;i++) L.push([i*25,0,i*25,h]);
+  for(let i=1;i<4;i++) L.push([0,i*27,w,i*27]);
+  const ln=exLines(L);
+  return svgURI(`<rect width="${w}" height="${h}" fill="#f4f4f2"/>${dotsSVG(pts)}${ln(STKH)}${ln(STK)}`,w,h); }
 
 /* ===========================================================================
    geometry helpers for draw guardrails
@@ -259,6 +270,7 @@ function downsample(p,k){ if(p.length<=k) return p.slice(); const out=[]; const 
   for(let i=0;i<k;i++) out.push(p[Math.round(i*step)]); return out; }
 function dedupe(p,eps=5){ const out=[p[0]]; for(let i=1;i<p.length;i++){ const a=out[out.length-1],b=p[i];
   if(Math.hypot(b.x-a.x,b.y-a.y)>=eps) out.push(b); } return out; }
+function polylineLength(p){ let L=0; for(let i=1;i<p.length;i++) L+=Math.hypot(p[i].x-p[i-1].x,p[i].y-p[i-1].y); return L; }
 function selfIntersects(poly){ // closed ring; flags only "significant" lobe crossings (e.g. figure-8),
   const n=poly.length-1; if(n<6) return false;          // tolerating small local wiggles (lenient).
   const sep=Math.max(3, Math.floor(n*0.12));            // crossing edges must be far apart along the path
@@ -307,12 +319,15 @@ class DrawGroupsPlugin {
     function redraw(){
       ctx.clearRect(0,0,W,H);
       if(img.complete && img.naturalWidth) ctx.drawImage(img,0,0,W,H);
-      ctx.lineWidth=3; ctx.strokeStyle='rgba(26,138,58,0.9)'; ctx.lineJoin='round'; ctx.lineCap='round';
+      ctx.lineJoin='round'; ctx.lineCap='round';
       const all = cur ? strokes.concat([cur]) : strokes;
-      for(const s of all){ if(s.length<1) continue; ctx.beginPath(); ctx.moveTo(s[0].x,s[0].y);
-        for(let i=1;i<s.length;i++) ctx.lineTo(s[i].x,s[i].y);
-        if(s!==cur) ctx.closePath();   // show committed loops closed
-        ctx.stroke(); }
+      // white casing then dark core -> visible on any background, color-blind safe (no hue)
+      for(const pass of [{w:6,c:'rgba(255,255,255,0.95)'},{w:2.6,c:'rgba(17,17,17,0.97)'}]){
+        ctx.lineWidth=pass.w; ctx.strokeStyle=pass.c;
+        for(const s of all){ if(s.length<1) continue; ctx.beginPath(); ctx.moveTo(s[0].x,s[0].y);
+          for(let i=1;i<s.length;i++) ctx.lineTo(s[i].x,s[i].y);
+          ctx.stroke(); }   // open dividing lines (not closed loops)
+      }
     }
     img.onload=redraw; img.src=trial.image_src;
 
@@ -328,18 +343,14 @@ class DrawGroupsPlugin {
     display_element.querySelector('#dgundo').onclick  = ()=>{ strokes.pop(); errEl.textContent=''; redraw(); };
     display_element.querySelector('#dgclear').onclick = ()=>{ strokes=[]; errEl.textContent=''; redraw(); };
     display_element.querySelector('#dgdone').onclick  = ()=>{
-      const minArea = 0.004*W*H;   // reject lines / tiny shapes (lenient)
-      const clean=[]; let openBad=false, crossBad=false;
+      const minLen = 0.08*Math.hypot(W,H);   // a real divider spans a chunk of the image; drop tiny dabs
+      const clean=[];
       for(const s of strokes){
-        const ds=dedupe(s);                          // drop near-duplicate samples (avoids false self-intersections)
-        if(ds.length<6){ openBad=true; continue; }
-        const ring=ds.concat([ds[0]]);               // auto-close
-        if(shoelace(ring) < minArea){ openBad=true; continue; }
-        if(selfIntersects(downsample(ring,60))){ crossBad=true; continue; }
-        clean.push(ring);
+        const ds=dedupe(s);                          // drop near-duplicate samples
+        if(ds.length<2) continue;
+        if(polylineLength(ds) < minLen) continue;    // too short -> ignore (not an error)
+        clean.push(ds);                              // keep raw open polyline (boundary map built offline)
       }
-      if(crossBad){ errEl.textContent=trial.err_cross; return; }
-      if(openBad){ errEl.textContent=trial.err_open; return; }
       if(clean.length===0){ errEl.textContent=trial.err_none; return; }
       if(clean.length>trial.max_loops){ errEl.textContent=trial.err_many.replace('{M}',trial.max_loops); return; }
       window.removeEventListener('mouseup',end);
@@ -377,7 +388,7 @@ ov.onclick=(e)=>{ if(e.target===ov || e.target.id==='help-x') ov.style.display='
 // 0) language
 const lang = {
   type: jsPsychHtmlButtonResponse,
-  stimulus: "<h2>Sprache / Language</h2><p>Bitte wähle deine Sprache.<br>Please choose your language.</p>",
+  stimulus: "<h2>Sprache / Language</h2><p>Bitte wählen Sie Ihre Sprache.<br>Please choose your language.</p>",
   choices: ["Deutsch", "English"],
   on_finish: (d)=>{ L = d.response===0 ? "de" : "en"; jsPsych.data.addProperties({language:L}); }
 };
@@ -414,7 +425,7 @@ const token_gate = {
 // 2) consent + privacy
 const consent = {
   type: jsPsychHtmlButtonResponse,
-  stimulus: ()=>`<h2>${t('consent_title')}</h2>${t('consent_body')}`,
+  stimulus: ()=>`${t('intro_context')}<h2>${t('consent_title')}</h2>${t('consent_body')}`,
   choices: ()=>[t('consent_agree')]
 };
 
@@ -431,7 +442,7 @@ const demographics = {
         <option value="d">${t('g_d')}</option><option value="na">${t('g_na')}</option></select></div>
     <div class="form-row">${t('demo_role')}:
       <select name="role" required><option value="">${t('choose')}</option>
-        <option value="public">${t('r_public')}</option><option value="police">${t('r_police')}</option>
+        <option value="public">${t('r_public')}</option><option value="student">${t('r_student')}</option><option value="police">${t('r_police')}</option>
         <option value="fire">${t('r_fire')}</option><option value="security">${t('r_security')}</option>
         <option value="other">${t('r_other')}</option></select></div>
     <div class="form-row">${t('demo_vision')}:
@@ -450,7 +461,7 @@ const bws_instr = {
   type: jsPsychHtmlButtonResponse,
   stimulus: ()=>`<h3>${t('bws_title')}</h3>${t('bws_body')}`,
   choices: ()=>[t('got_it')],
-  on_start: ()=>{ currentInstructions = `<h4>${t('bws_title')}</h4>${t('bws_body')}`; fab.style.display='block'; }
+  on_start: ()=>{ currentInstructions = `<h4>${t('bws_title')}</h4>${t('bws_body')}`; }
 };
 
 // one BWS item = best screen + worst screen (worst excludes the best pick)
@@ -472,6 +483,7 @@ function bwsItem(stim, isPractice=false){
     type: jsPsychHtmlButtonResponse,
     stimulus: ()=>`${isPractice?`<div class="practice-banner">${t('practice')}</div>`:''}<p>${t('bws_best')}</p>`,
     choices: ()=>baseChoices,
+    prompt: ()=>srcLine(stim.ds),
     data: { ...d0, phase:'best' },
     on_finish: (d)=>{ d.best_pos=d.response; d.best_method=layout[d.response]; bestPos=d.response; }
   };
@@ -479,6 +491,7 @@ function bwsItem(stim, isPractice=false){
     type: jsPsychHtmlButtonResponse,
     stimulus: ()=>`${isPractice?`<div class="practice-banner">${t('practice')}</div>`:''}<p>${t('bws_worst')}</p><p style="color:#888;font-size:13px">${t('bws_worst_note')}</p>`,
     choices: ()=>baseChoices,
+    prompt: ()=>srcLine(stim.ds),
     // disable the option chosen as best (best != worst)
     button_html: (choice, idx)=> idx===bestPos
         ? `<button class="jspsych-btn" disabled style="opacity:.35;cursor:not-allowed;pointer-events:none">${choice}</button>`
@@ -495,10 +508,8 @@ const draw_instr = {
   stimulus: ()=>`<h3>${t('draw_title')}</h3>${t('draw_body')}
     <p><b>${t('draw_examples')}:</b></p>
     <div>
-      <div class="grp"><img src="${exGood()}"><div style="color:#1a8a3a">✓ ${t('ex_good')}</div></div>
-      <div class="grp"><img src="${exOpen()}"><div style="color:#c0392b">✗ ${t('ex_open')}</div></div>
-      <div class="grp"><img src="${exCross()}"><div style="color:#c0392b">✗ ${t('ex_cross')}</div></div>
-      <div class="grp"><img src="${exMany()}"><div style="color:#c0392b">✗ ${t('ex_many')}</div></div>
+      <div class="grp"><img src="${exPartGood()}"><div style="color:#1a8a3a">✓ ${t('ex_good')}</div></div>
+      <div class="grp"><img src="${exPartMany()}"><div style="color:#c0392b">✗ ${t('ex_many')}</div></div>
     </div>`,
   choices: ()=>[t('got_it')],
   on_start: ()=>{ currentInstructions = `<h4>${t('draw_title')}</h4>${t('draw_body')}`; }
@@ -510,13 +521,12 @@ function drawTrial(stim, isPractice=false){
   return {
     type: DrawGroupsPlugin,
     image_src: STIM_BASE+stim.raw,
-    prompt: ()=>`${isPractice?`<div class="practice-banner">${t('practice')}</div>`:''}<p><b>${t('draw_title')}</b></p>`,
+    prompt: ()=>`${isPractice?`<div class="practice-banner">${t('practice')}</div>`:''}<p><b>${t('draw_title')}</b></p>${srcLine(stim.ds)}`,
     hint: ()=>t('draw_hint'),
-    target_loops: stim.kv, max_loops: 8,                  // kv stored for offline ref; not shown (avoid priming)
+    target_loops: stim.kv, max_loops: 12,                 // kv stored for offline ref; not shown (avoid priming)
     canvas_width: cw, canvas_height: ch, image_id: 0,
     undo_label:()=>t('draw_undo'), clear_label:()=>t('draw_clear'), done_label:()=>t('draw_done'),
-    err_none:()=>t('derr_none'), err_open:()=>t('derr_open'),
-    err_cross:()=>t('derr_cross'), err_many:()=>t('derr_many'),
+    err_none:()=>t('derr_none'), err_many:()=>t('derr_many'),
     data: { task:'draw', practice:isPractice, stim_id:stim.id, dataset:stim.ds, density:stim.dens,
             gt:stim.gt, kv:stim.kv, orig_W:stim.W, orig_H:stim.H }
   };
@@ -583,7 +593,7 @@ const preload = { type: jsPsychPreload, images: preload_imgs, show_progress_bar:
                   continue_after_error:true, message:"Loading images… / Bilder werden geladen…" };
 
 const timeline = [ lang, token_gate, consent, demographics, preload,
-                   bws_instr, ...bws_block, draw_instr, ...draw_block, post ];
+                   draw_instr, ...draw_block, bws_instr, ...bws_block, post ];
 if(EXPERIMENT_ID!=="REPLACE_WITH_DATAPIPE_ID"){ timeline.push(save_data, finalize_token); }
 timeline.push(thanks);
 
