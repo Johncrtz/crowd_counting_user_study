@@ -91,7 +91,7 @@ const T = {
     bws_worst_note: "(the option you chose as best is greyed out)",
 
     draw_title: "Part 1 of 2 — Divide the image into regions",
-    draw_body: "<p style='text-align:left'>Now you will see crowds with <b>no</b> lines drawn. Draw <b>dividing lines</b> that split the image into meaningful regions, so that each region holds a part of the crowd that belongs together. Use, for example, the <b>position</b> of the groups, or where the crowd goes from <b>dense to less dense</b>. You can draw several lines.</p>",
+    draw_body: "<p style='text-align:left'>You will see photos of crowds. Draw <b>dividing lines</b> that split the image into meaningful regions, so that each region holds a part of the crowd that belongs together. Use, for example, the <b>position</b> of the groups, or where the crowd goes from <b>dense to less dense</b>. You can draw several lines.</p>",
     draw_examples: "Examples",
     ex_good: "Good: a few dividing lines along groups / density changes",
     ex_many: "Wrong: far too many, arbitrary lines",
@@ -143,7 +143,7 @@ const T = {
     bws_worst_note: "(die zuvor als beste gewählte Option ist ausgegraut)",
 
     draw_title: "Teil 1 von 2 — Bild in Regionen unterteilen",
-    draw_body: "<p style='text-align:left'>Jetzt sehen Sie Menschenmengen <b>ohne</b> eingezeichnete Linien. Zeichnen Sie selbst <b>Trennlinien</b>, die das Bild in sinnvolle Regionen unterteilen — so, dass jede Region einen zusammengehörigen Teil der Menge enthält. Orientieren Sie sich zum Beispiel an der <b>Position</b> der Gruppen oder daran, wo die Menge von <b>dicht zu weniger dicht</b> übergeht. Sie können mehrere Linien ziehen.</p>",
+    draw_body: "<p style='text-align:left'>Sie sehen Fotos von Menschenmengen. Zeichnen Sie selbst <b>Trennlinien</b>, die das Bild in sinnvolle Regionen unterteilen — so, dass jede Region einen zusammengehörigen Teil der Menge enthält. Orientieren Sie sich zum Beispiel an der <b>Position</b> der Gruppen oder daran, wo die Menge von <b>dicht zu weniger dicht</b> übergeht. Sie können mehrere Linien ziehen.</p>",
     draw_examples: "Beispiele",
     ex_good: "Gut: wenige Trennlinien entlang der Gruppen / Dichteübergänge",
     ex_many: "Falsch: viel zu viele, willkürliche Linien",
@@ -568,9 +568,12 @@ const thanks = {
    TIMELINE
    =========================================================================== */
 // --- per-participant assignment: random subset (image = random effect; exposure ~even) ---
-const POOL = STIMULI.slice();
-const practiceBWS = POOL[0], practiceDraw = POOL[1];      // fixed practice items
-const rest = POOL.slice(2);
+const PRACTICE_BWS_ID  = "S001";
+const PRACTICE_DRAW_ID = "S176";   // clear teaching example: plaza with distinct groups + density gradient
+const byId = id => STIMULI.find(s => s.id === id);
+const practiceBWS = byId(PRACTICE_BWS_ID) || STIMULI[0];
+const practiceDraw = byId(PRACTICE_DRAW_ID) || STIMULI[1];
+const rest = STIMULI.filter(s => s.id !== PRACTICE_BWS_ID && s.id !== PRACTICE_DRAW_ID);
 const bwsSet  = jsPsych.randomization.sampleWithoutReplacement(rest, Math.min(N_BWS, rest.length));
 const drawSet = jsPsych.randomization.sampleWithoutReplacement(rest.filter(s=>!bwsSet.includes(s)), N_DRAW);
 jsPsych.data.addProperties({ bws_ids:[practiceBWS,...bwsSet].map(s=>s.id).join(" "),
