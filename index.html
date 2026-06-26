@@ -86,9 +86,10 @@ const T = {
 
     bws_title: "Part 2 of 2 — Most meaningful division",
     bws_body: "<p style='text-align:left'>Each screen shows the <b>same crowd</b> divided in three ways (A, B, C). Choose the division that best separates the crowd — or, where applicable, the different groups of people in the image. Possible criteria are, for example, <b>position</b> (groups are spread out across the image) or crowd <b>density</b> (the crowd goes from very dense to less dense). First pick the division that seems <b>most meaningful</b> to you, then the <b>worst</b> one.</p>",
-    bws_best: "Which option (A / B / C) divides the crowd the <span class='best'>BEST</span>?",
-    bws_worst: "And which option (A / B / C) does it the <span class='worst'>WORST</span>?",
-    bws_worst_note: "(the option you chose as best is greyed out)",
+    bws_prompt: "First click the division that splits the crowd <span class='best'>BEST</span>, then the one that does it <span class='worst'>WORST</span>.",
+    badge_best: "BEST", badge_worst: "WORST",
+    btn_undo: "↶ Undo", btn_next: "Next",
+    finish_submit: "Finish and submit",
 
     draw_title: "Part 1 of 2 — Divide the image into regions",
     draw_body: "<p style='text-align:left'>You will see photos of crowds. Draw <b>dividing lines</b> that split the image into meaningful regions, so that each region holds a part of the crowd that belongs together. Use, for example, the <b>position</b> of the groups, or where the crowd goes from <b>dense to less dense</b>. You can draw several lines.</p>",
@@ -144,9 +145,10 @@ const T = {
 
     bws_title: "Teil 2 von 2 — Sinnvollste Aufteilung",
     bws_body: "<p style='text-align:left'>Jeder Bildschirm zeigt <b>dieselbe</b> Menschenmenge, auf drei Arten aufgeteilt (A, B, C). Wählen Sie die Aufteilung, die die Menge – oder gegebenenfalls die verschiedenen Gruppen von Menschen im Bild – am besten unterteilt. Mögliche Kriterien sind zum Beispiel die <b>Position</b> (Gruppen sind örtlich über das Bild verteilt) oder die <b>Dichte</b> der Menschenmenge (die Menge geht von sehr dicht zu weniger dicht über). Wählen Sie zuerst die Aufteilung, die Ihnen <b>am sinnvollsten</b> erscheint, danach die <b>schlechteste</b>.</p>",
-    bws_best: "Welche Option (A / B / C) unterteilt die Menschenmenge <span class='best'>AM BESTEN</span>?",
-    bws_worst: "Und welche Option (A / B / C) macht es <span class='worst'>AM SCHLECHTESTEN</span>?",
-    bws_worst_note: "(die zuvor als beste gewählte Option ist ausgegraut)",
+    bws_prompt: "Klicken Sie zuerst auf die Aufteilung, die die Menge <span class='best'>AM BESTEN</span> unterteilt, danach auf die <span class='worst'>SCHLECHTESTE</span>.",
+    badge_best: "BESTE", badge_worst: "SCHLECHTESTE",
+    btn_undo: "↶ Zurück", btn_next: "Weiter",
+    finish_submit: "Abschließen und absenden",
 
     draw_title: "Teil 1 von 2 — Bild in Regionen unterteilen",
     draw_body: "<p style='text-align:left'>Sie sehen Fotos von Menschenmengen. Zeichnen Sie selbst <b>Trennlinien</b>, die das Bild in sinnvolle Regionen unterteilen — so, dass jede Region einen zusammengehörigen Teil der Menge enthält. Orientieren Sie sich zum Beispiel an der <b>Position</b> der Gruppen oder daran, wo die Menge von <b>dicht zu weniger dicht</b> übergeht. Sie können mehrere Linien ziehen.</p>",
@@ -394,6 +396,85 @@ fab.onclick=()=>{ document.getElementById('help-h').textContent=t('help_title');
   document.getElementById('help-x').textContent=t('help_close'); ov.style.display='flex'; };
 ov.onclick=(e)=>{ if(e.target===ov || e.target.id==='help-x') ov.style.display='none'; };
 
+// ── Custom BWS: ONE screen — click BEST (green), then WORST (red); undo + next ──
+class BwsPlugin {
+  static info = {
+    name: "bws-pick", version: "1.0.0",
+    parameters: {
+      imgs:           { type: PT.STRING,      default: "[]" },  // JSON: image URLs at A/B/C
+      methods:        { type: PT.STRING,      default: "[]" },  // JSON: method at A/B/C (data only)
+      prompt:         { type: PT.HTML_STRING, default: "" },
+      src_html:       { type: PT.HTML_STRING, default: "" },
+      practice:       { type: PT.BOOL,        default: false },
+      practice_label: { type: PT.STRING,      default: "" },
+      badge_best:     { type: PT.STRING,      default: "BEST" },
+      badge_worst:    { type: PT.STRING,      default: "WORST" },
+      undo_label:     { type: PT.STRING,      default: "Undo" },
+      next_label:     { type: PT.STRING,      default: "Next" }
+    },
+    data: {
+      best_pos: { type: PT.INT }, worst_pos: { type: PT.INT },
+      best_method: { type: PT.STRING }, worst_method: { type: PT.STRING }, rt: { type: PT.INT }
+    }
+  };
+  constructor(jsPsych){ this.jsPsych = jsPsych; }
+  trial(display_element, trial){
+    const imgs = JSON.parse(trial.imgs), methods = JSON.parse(trial.methods), labels = ['A','B','C'];
+    const t0 = performance.now();
+    let best = null, worst = null;
+    display_element.innerHTML = `
+      ${trial.practice ? `<div class="practice-banner">${trial.practice_label}</div>` : ''}
+      <p>${trial.prompt}</p>
+      <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:14px;margin:8px 0">
+        ${imgs.map((src,i)=>`
+          <div class="bws-panel" data-i="${i}" style="cursor:pointer;text-align:center">
+            <div class="panel-cap">${labels[i]}</div>
+            <div style="position:relative;display:inline-block">
+              <img class="panel" src="${src}" style="width:270px;max-width:30vw;display:block">
+              <div class="bws-ov" style="position:absolute;inset:0;display:none;align-items:center;
+                   justify-content:center;border-radius:4px;font-weight:bold;font-size:19px;letter-spacing:1px;
+                   color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.75)"></div>
+            </div>
+          </div>`).join('')}
+      </div>
+      ${trial.src_html || ''}
+      <div style="margin-top:14px">
+        <button class="jspsych-btn" id="bws-undo" style="margin-right:8px">${trial.undo_label}</button>
+        <button class="jspsych-btn" id="bws-next" disabled>${trial.next_label}</button>
+      </div>`;
+    const ovs  = [...display_element.querySelectorAll('.bws-ov')];
+    const next = display_element.querySelector('#bws-next');
+    const paint = ()=>{
+      ovs.forEach((o,i)=>{
+        if(i===best){       o.style.display='flex'; o.style.background='rgba(76,175,80,0.42)'; o.textContent=trial.badge_best; }
+        else if(i===worst){ o.style.display='flex'; o.style.background='rgba(229,57,53,0.42)'; o.textContent=trial.badge_worst; }
+        else {              o.style.display='none'; o.textContent=''; }
+      });
+      next.disabled = (best===null || worst===null);
+    };
+    display_element.querySelectorAll('.bws-panel').forEach(p=>{
+      p.onclick = ()=>{ const i = +p.dataset.i;
+        if(best===null)        best = i;     // 1st pick -> BEST
+        else if(i===best)      {}            // re-click best -> ignore (use undo)
+        else if(worst===null)  worst = i;    // 2nd pick -> WORST
+        paint();
+      };
+    });
+    display_element.querySelector('#bws-undo').onclick = ()=>{
+      if(worst!==null) worst = null; else if(best!==null) best = null;   // undo worst, then best
+      paint();
+    };
+    next.onclick = ()=>{
+      if(best===null || worst===null) return;
+      this.jsPsych.finishTrial({
+        best_pos: best, worst_pos: worst,
+        best_method: methods[best], worst_method: methods[worst],
+        rt: Math.round(performance.now() - t0)
+      });
+    };
+  }
+}
+
 /* ===========================================================================
    TRIALS
    =========================================================================== */
@@ -473,7 +554,7 @@ const bws_instr = {
   type: jsPsychHtmlButtonResponse,
   stimulus: ()=>`<h3>${t('bws_title')}</h3>${t('bws_body')}`,
   choices: ()=>[t('got_it')],
-  on_start: ()=>{ currentInstructions = `<h4>${t('bws_title')}</h4>${t('bws_body')}`; }
+  on_start: ()=>{ currentInstructions = `<h4>${t('bws_title')}</h4>${t('bws_body')}`; fab.style.display='block'; }
 };
 
 // one BWS item = best screen + worst screen (worst excludes the best pick)
@@ -485,33 +566,22 @@ function bwsItem(stim, isPractice=false){
   ];
   const order=jsPsych.randomization.shuffle([0,1,2]);     // position -> method index
   const layout=order.map(idx=>methods[idx].m);            // method at A/B/C
-  const labels=['A','B','C'];
-  const baseChoices=order.map((idx,pos)=>`<div class="panel-cap">${labels[pos]}</div><img class="panel" src="${methods[idx].src}" style="width:270px;max-width:30vw">`);
-  let bestPos = null;
-  const d0 = { task:'bws', practice:isPractice, stim_id:stim.id, dataset:stim.ds,
-               density:stim.dens, gt:stim.gt, kv:stim.kv, kg:stim.kg, kq:stim.kq, layout:JSON.stringify(layout) };
-
-  const best = {
-    type: jsPsychHtmlButtonResponse,
-    stimulus: ()=>`${isPractice?`<div class="practice-banner">${t('practice')}</div>`:''}<p>${t('bws_best')}</p>`,
-    choices: ()=>baseChoices,
-    prompt: ()=>srcLine(stim.ds),
-    data: { ...d0, phase:'best' },
-    on_finish: (d)=>{ d.best_pos=d.response; d.best_method=layout[d.response]; bestPos=d.response; }
+  const imgs=order.map(idx=>methods[idx].src);            // image at A/B/C
+  return {
+    type: BwsPlugin,
+    imgs: JSON.stringify(imgs),
+    methods: JSON.stringify(layout),
+    practice: isPractice,
+    prompt:         ()=>t('bws_prompt'),
+    src_html:       ()=>srcLine(stim.ds),
+    practice_label: ()=>t('practice'),
+    badge_best:     ()=>t('badge_best'),
+    badge_worst:    ()=>t('badge_worst'),
+    undo_label:     ()=>t('btn_undo'),
+    next_label:     ()=>t('btn_next'),
+    data: { task:'bws', practice:isPractice, stim_id:stim.id, dataset:stim.ds,
+            density:stim.dens, gt:stim.gt, kv:stim.kv, kg:stim.kg, kq:stim.kq, layout:JSON.stringify(layout) }
   };
-  const worst = {
-    type: jsPsychHtmlButtonResponse,
-    stimulus: ()=>`${isPractice?`<div class="practice-banner">${t('practice')}</div>`:''}<p>${t('bws_worst')}</p><p style="color:#888;font-size:13px">${t('bws_worst_note')}</p>`,
-    choices: ()=>baseChoices,
-    prompt: ()=>srcLine(stim.ds),
-    // disable the option chosen as best (best != worst)
-    button_html: (choice, idx)=> idx===bestPos
-        ? `<button class="jspsych-btn" disabled style="opacity:.35;cursor:not-allowed;pointer-events:none">${choice}</button>`
-        : `<button class="jspsych-btn">${choice}</button>`,
-    data: { ...d0, phase:'worst' },
-    on_finish: (d)=>{ d.worst_pos=d.response; d.worst_method=layout[d.response]; }
-  };
-  return [best, worst];
 }
 
 // 5) draw instructions + examples (sets help text)
@@ -524,7 +594,7 @@ const draw_instr = {
       <div class="grp"><img src="${exPartMany()}"><div style="color:#c0392b">✗ ${t('ex_many')}</div></div>
     </div>`,
   choices: ()=>[t('got_it')],
-  on_start: ()=>{ currentInstructions = `<h4>${t('draw_title')}</h4>${t('draw_body')}`; }
+  on_start: ()=>{ currentInstructions = `<h4>${t('draw_title')}</h4>${t('draw_body')}`; fab.style.display='block'; }
 };
 function drawTrial(stim, isPractice=false){
   const aspect=(stim.W||4)/(stim.H||3);
@@ -566,7 +636,7 @@ const post1 = {
 const post2 = {
   type: jsPsychSurveyHtmlForm,
   preamble: ()=>`<h3>${t('post2_title')}</h3>${t('sys_intro')}`,
-  button_label: ()=>t('finish'),
+  button_label: ()=>t('finish_submit'),
   html: ()=> likert('depend', t('q_depend'),  t('anch_no'),      t('anch_strong'))
            + likert('trust',  t('q_trust2'),  t('anch_no'),      t('anch_strong'))
            + likert('useful', t('q_useful'),  t('anch_useless'), t('anch_useful')),
@@ -607,8 +677,8 @@ jsPsych.data.addProperties({ bws_ids:[practiceBWS,...bwsSet].map(s=>s.id).join("
                              draw_ids:[practiceDraw,...drawSet].map(s=>s.id).join(" ") });
 
 const bws_block = [];
-bws_block.push(...bwsItem(practiceBWS, true));    // practice
-for(const s of bwsSet) bws_block.push(...bwsItem(s));
+bws_block.push(bwsItem(practiceBWS, true));    // practice
+for(const s of bwsSet) bws_block.push(bwsItem(s));
 // TODO: insert attention-check items into bws_block.
 
 const draw_block = [];
