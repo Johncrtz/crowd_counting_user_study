@@ -51,6 +51,7 @@ const TEST_TOKEN    = "CC-TEST00";      // always-valid token for testing — ne
 const STIM_BASE = "stimuli_075/";   // rendered images, served next to index.html
 const N_BWS  = 16;  // BWS trials per participant (random subset of STIMULI)
 const N_DRAW = 3;   // draw trials per participant
+const PRIZE_FORM_URL = "https://forms.gle/ryQvZcXPQTbYqjPy8";   // giveaway invite shown on the last screen. Empty = hidden.
 
 let L = "en";       // language, set on first screen
 let TOKEN = null;
@@ -71,8 +72,8 @@ const T = {
     token_invalid: "This token is not valid or has already been used.",
 
     consent_title: "Before we start",
-    intro_context: "<p style='text-align:left'>When monitoring large crowds on video, it matters <b>where</b> and how many people are present — for example, to spot <b class='kw'>dangerous crowding</b> at events early. This is helped by dividing an image into meaningful areas: separating dense from less dense <b class='kw'>zones</b>, or telling individual groups of people apart. The more <b class='kw'>understandable</b> such a division is to a human, the more one can <b class='kw'>trust</b> the numbers derived from it.</p><p style='text-align:left'>In this study, we ask you to first divide crowd images yourself and then rate several predefined divisions by how meaningful they are. The study takes about <b class='kw'>10 minutes</b>; after you finish, <b class='kw'>your access expires</b>.</p>",
-    consent_body: "<p style='text-align:left'>Participation is <b>voluntary</b> and you may stop at any time. All responses are <b>fully anonymous</b> — we never collect your name, email or IP. Data are processed for scientific research only, in accordance with the EU <b>GDPR (DSGVO)</b>, and may be published in aggregated form.</p>",
+    intro_context: "<p style='text-align:left'>At large group events, dense crowding can become a <b class='kw'>risk</b> to people. So far the situation is often still estimated by hand — which is laborious and carries a certain <b class='kw'>potential for error</b>; <b class='kw'>video-based assistance systems</b> can help here through automation. This is helped by dividing an image into meaningful areas: separating dense from less dense <b class='kw'>zones</b>, or telling individual groups of people apart. The more <b class='kw'>understandable</b> such a division is to a human, the more one can <b class='kw'>trust</b> the numbers derived from it.</p><p style='text-align:left'>In this study, we ask you to first divide crowd images yourself and then rate several predefined divisions by how meaningful they are. The study takes about <b class='kw'>10 minutes</b>; after you finish, <b class='kw'>your access expires</b>.</p>",
+    consent_body: "<p style='text-align:left'>Participation is <b>voluntary</b> and you may stop at any time. All responses are <b>fully anonymous</b> — we never collect your name, email or IP. Data are processed for scientific research only, in accordance with the EU <b>GDPR (DSGVO)</b>, and may be published in aggregated form. Optionally, at the very end you can enter a prize draw (3 × €10 Amazon gift cards); the email is collected on a <b>separate</b> form, is not linked to your answers, and is deleted after the draw.</p>",
     consent_agree: "I have read this and agree to take part",
 
     demo_title: "A few details about you",
@@ -110,10 +111,10 @@ const T = {
     open_q: "In one sentence: what made a division <b>clear</b> — or <b>confusing</b> — to you?",
     open_ph: "Your answer…",
     post2_title: "To finish: a short scenario",
-    sys_intro: "<p style='text-align:left'>Imagine a software tool that supports security staff at a large event. It works in two steps:</p><ul style='text-align:left'><li><b>System A</b> divides the camera image of the crowd into regions — much like you did and rated yourself earlier.</li><li><b>System B</b> then evaluates each of these regions and estimates, for each, the number of people / the density of the crowd.</li></ul><p style='text-align:left'>In the end, an operator sees the divided image with the estimated numbers per region — and decides on that basis, for example <b>where it is getting dangerously crowded</b>.</p>",
-    q_depend: "In your opinion, how strongly does the <b>accuracy of System B's numbers</b> depend on <b>how well System A divided the image</b>?",
-    q_trust2: "Suppose you worked with such a system yourself: how strongly does your <b>trust</b> in the results depend on <b>how understandable</b> the image division is to you?",
-    q_useful: "In your opinion, how <b>useful</b> would such a system be for supporting security staff with such decisions in practice?",
+    sys_intro: "<p style='text-align:left'>Imagine a software tool that supports security staff at a large event. It works in two steps:</p><ul style='text-align:left'><li><b>Module A</b> divides the camera image of the crowd into regions — much like you did and rated yourself earlier.</li><li><b>Module B</b> then evaluates each of these regions and estimates, for each, the number of people / the density of the crowd.</li></ul><p style='text-align:left'>In the end, an operator sees the divided image with the estimated numbers per region — and decides on that basis, for example <b>where it is getting dangerously crowded</b>.</p>",
+    q_depend: "In your opinion, how strongly does the <b>accuracy of Module B's numbers</b> depend on <b>how well Module A divided the image</b>?",
+    q_trust2: "Suppose you worked with such software yourself: how strongly does your <b>trust</b> in the results depend on <b>how understandable</b> the image division is to you?",
+    q_useful: "In your opinion, how <b>useful</b> would such software be for supporting security staff with such decisions in practice?",
     anch_no: "not at all", anch_strong: "very strongly",
     anch_useless: "useless", anch_useful: "very useful",
 
@@ -122,6 +123,8 @@ const T = {
     feedback_ph: "Your feedback…", feedback_send: "Submit & finish",
 
     thanks_title: "Thank you!", thanks_body: "Your responses have been saved. You may now close this tab.",
+    prize_text: "🎁 As a thank-you, we're giving away <b>3 × €10 Amazon gift cards</b> among all participants. To enter, click below and add your email on a <b>separate</b> form — it is <b>not linked</b> to your answers and is deleted after the draw.",
+    prize_btn: "Enter the prize draw",
     saving: "Saving your data — please do not close this page…",
     save_fail_title: "We couldn't reach the server",
     save_fail_body: "Your responses have <b>not been saved yet</b>. Please check your internet connection and click <b>Try again</b>. If it keeps failing, click <b>Download my data</b> and send the downloaded file to the researcher — that way your responses will not be lost.",
@@ -139,8 +142,8 @@ const T = {
     token_invalid: "Dieser Token ist ungültig oder wurde bereits verwendet.",
 
     consent_title: "Bevor es losgeht",
-    intro_context: "<p style='text-align:left'>In der Videoüberwachung großer Menschenmengen ist es wichtig zu erfassen, <b>wo</b> sich wie viele Menschen befinden — etwa um bei Veranstaltungen <b class='kw'>gefährliche Gedrängesituationen</b> früh zu erkennen. Dabei hilft es, ein Bild in sinnvolle Bereiche zu unterteilen: dichte und weniger dichte <b class='kw'>Zonen</b> oder einzelne Personengruppen voneinander zu trennen. Je <b class='kw'>nachvollziehbarer</b> eine solche Unterteilung für den Menschen ist, desto eher kann man den daraus abgeleiteten Zahlen <b class='kw'>vertrauen</b>.</p><p style='text-align:left'>In der folgenden Studie bitten wir Sie, selbst Bilder von Menschenmengen zu unterteilen sowie verschiedene vorgegebene Unterteilungen nach ihrer Sinnhaftigkeit zu bewerten. Die Teilnahme an der Studie dauert ca. <b class='kw'>10 Minuten</b>; nach Abschluss <b class='kw'>erlischt Ihr Zugang</b>.</p>",
-    consent_body: "<p style='text-align:left'>Die Teilnahme ist <b>freiwillig</b> und kann jederzeit abgebrochen werden. Alle Antworten sind <b>vollständig anonym</b> — wir erheben weder Namen, E-Mail noch IP-Adresse. Die Daten werden ausschließlich zu wissenschaftlichen Zwecken gemäß <b>DSGVO</b> verarbeitet und ggf. in aggregierter Form veröffentlicht.</p>",
+    intro_context: "<p style='text-align:left'>Bei großen Gruppenveranstaltungen kann dichtes Gedränge zu einem <b class='kw'>Risiko</b> für die Menschen werden. Bislang wird die Lage oft noch händisch eingeschätzt, was aufwendig ist und ein gewisses <b class='kw'>Fehlerpotential</b> birgt — <b class='kw'>videogestützte Assistenzsysteme</b> können hier durch Automatisierung unterstützen. Dabei hilft es, ein Bild in sinnvolle Bereiche zu unterteilen: dichte und weniger dichte <b class='kw'>Zonen</b> oder einzelne Personengruppen voneinander zu trennen. Je <b class='kw'>nachvollziehbarer</b> eine solche Unterteilung für den Menschen ist, desto eher kann man den daraus abgeleiteten Zahlen <b class='kw'>vertrauen</b>.</p><p style='text-align:left'>In der folgenden Studie bitten wir Sie, selbst Bilder von Menschenmengen zu unterteilen sowie verschiedene vorgegebene Unterteilungen nach ihrer Sinnhaftigkeit zu bewerten. Die Teilnahme an der Studie dauert ca. <b class='kw'>10 Minuten</b>; nach Abschluss <b class='kw'>erlischt Ihr Zugang</b>.</p>",
+    consent_body: "<p style='text-align:left'>Die Teilnahme ist <b>freiwillig</b> und kann jederzeit abgebrochen werden. Alle Antworten sind <b>vollständig anonym</b> — wir erheben weder Namen, E-Mail noch IP-Adresse. Die Daten werden ausschließlich zu wissenschaftlichen Zwecken gemäß <b>DSGVO</b> verarbeitet und ggf. in aggregierter Form veröffentlicht. Optional können Sie ganz am Ende an einem Gewinnspiel teilnehmen (3 × 10-€-Amazon-Gutscheine); die E-Mail wird auf einem <b>separaten</b> Formular erfasst, ist nicht mit Ihren Antworten verknüpft und wird nach der Verlosung gelöscht.</p>",
     consent_agree: "Ich habe dies gelesen und nehme teil",
 
     demo_title: "Ein paar Angaben zu Ihnen",
@@ -178,10 +181,10 @@ const T = {
     open_q: "In einem Satz: Was machte eine Aufteilung für Sie <b>nachvollziehbar</b> — oder <b>verwirrend</b>?",
     open_ph: "Ihre Antwort…",
     post2_title: "Zum Abschluss: ein kurzes Szenario",
-    sys_intro: "<p style='text-align:left'>Stellen Sie sich eine Software vor, die Sicherheitskräfte bei einer Großveranstaltung unterstützt. Sie arbeitet in zwei Schritten:</p><ul style='text-align:left'><li><b>System A</b> unterteilt das Kamerabild der Menschenmenge in Regionen — ähnlich, wie Sie es zuvor selbst getan und bewertet haben.</li><li><b>System B</b> wertet anschließend jede dieser Regionen aus und schätzt für jede die Personenanzahl bzw. die Dichte der Menge.</li></ul><p style='text-align:left'>Am Ende sieht eine Sicherheitskraft das unterteilte Bild mit den geschätzten Zahlen je Region — und entscheidet auf dieser Grundlage, etwa <b>wo es gefährlich eng wird</b>.</p>",
-    q_depend: "Wie stark hängt Ihrer Meinung nach die <b>Genauigkeit der Zahlen von System B</b> davon ab, wie <b>gut System A das Bild aufgeteilt</b> hat?",
-    q_trust2: "Angenommen, Sie würden selbst mit einem solchen System arbeiten: Wie stark hängt Ihr <b>Vertrauen</b> in die Ergebnisse davon ab, wie <b>nachvollziehbar</b> die Aufteilung des Bildes für Sie ist?",
-    q_useful: "Wie <b>nützlich</b> wäre ein solches System Ihrer Meinung nach, um Sicherheitskräfte bei solchen Entscheidungen in der Praxis zu unterstützen?",
+    sys_intro: "<p style='text-align:left'>Stellen Sie sich eine Software vor, die Sicherheitskräfte bei einer Großveranstaltung unterstützt. Sie arbeitet in zwei Schritten:</p><ul style='text-align:left'><li><b>Module A</b> unterteilt das Kamerabild der Menschenmenge in Regionen — ähnlich, wie Sie es zuvor selbst getan und bewertet haben.</li><li><b>Module B</b> wertet anschließend jede dieser Regionen aus und schätzt für jede die Personenanzahl bzw. die Dichte der Menge.</li></ul><p style='text-align:left'>Am Ende sieht eine Sicherheitskraft das unterteilte Bild mit den geschätzten Zahlen je Region — und entscheidet auf dieser Grundlage, etwa <b>wo es gefährlich eng wird</b>.</p>",
+    q_depend: "Wie stark hängt Ihrer Meinung nach die <b>Genauigkeit der Zahlen von Module B</b> davon ab, wie <b>gut Module A das Bild aufgeteilt</b> hat?",
+    q_trust2: "Angenommen, Sie würden selbst mit einer solchen Software arbeiten: Wie stark hängt Ihr <b>Vertrauen</b> in die Ergebnisse davon ab, wie <b>nachvollziehbar</b> die Aufteilung des Bildes für Sie ist?",
+    q_useful: "Wie <b>nützlich</b> wäre eine solche Software Ihrer Meinung nach, um Sicherheitskräfte bei solchen Entscheidungen in der Praxis zu unterstützen?",
     anch_no: "gar nicht", anch_strong: "sehr stark",
     anch_useless: "nutzlos", anch_useful: "sehr nützlich",
 
@@ -190,6 +193,8 @@ const T = {
     feedback_ph: "Ihr Feedback…", feedback_send: "Absenden & beenden",
 
     thanks_title: "Vielen Dank!", thanks_body: "Ihre Antworten wurden gespeichert. Sie können diesen Tab jetzt schließen.",
+    prize_text: "🎁 Als Dankeschön verlosen wir unter allen Teilnehmenden <b>3 × 10-€-Amazon-Gutscheine</b>. Zum Mitmachen unten klicken und auf einem <b>separaten</b> Formular Ihre E-Mail eintragen — sie ist <b>nicht</b> mit Ihren Antworten verknüpft und wird nach der Verlosung gelöscht.",
+    prize_btn: "Am Gewinnspiel teilnehmen",
     saving: "Daten werden gespeichert — bitte diese Seite nicht schließen…",
     save_fail_title: "Der Server ist nicht erreichbar",
     save_fail_body: "Ihre Antworten wurden noch <b>nicht gespeichert</b>. Bitte prüfen Sie Ihre Internetverbindung und klicken Sie auf <b>Erneut versuchen</b>. Falls es weiterhin fehlschlägt, klicken Sie auf <b>Daten herunterladen</b> und senden Sie die heruntergeladene Datei an die Studienleitung — so gehen Ihre Antworten nicht verloren.",
@@ -658,7 +663,7 @@ const post1 = {
   data: { task:'post_reflection' }
 };
 
-// Page 2 (lay + expert): System A/B scenario + 3 ratings
+// Page 2 (lay + expert): Module A/B scenario + 3 ratings
 const post2 = {
   type: jsPsychSurveyHtmlForm,
   preamble: ()=>`<h3>${t('post2_title')}</h3>${t('sys_intro')}`,
@@ -754,7 +759,14 @@ class SaveDataPlugin {
 const save_and_finalize = { type: SaveDataPlugin };
 const thanks = {
   type: jsPsychHtmlButtonResponse,
-  stimulus: ()=>`<h3>${t('thanks_title')}</h3><p>${t('thanks_body')}</p>`,
+  stimulus: ()=>`<h3>${t('thanks_title')}</h3><p>${t('thanks_body')}</p>`
+    + (PRIZE_FORM_URL
+        ? `<div style="margin:18px auto 0;max-width:560px;padding:16px;border:1px solid #ffe08a;`
+          + `background:#fff8e1;border-radius:10px">`
+          + `<p style="text-align:left;margin-top:0">${t('prize_text')}</p>`
+          + `<a class="jspsych-btn" href="${PRIZE_FORM_URL}" target="_blank" rel="noopener"`
+          + ` style="text-decoration:none">${t('prize_btn')}</a></div>`
+        : ``),
   choices: ()=>[t('finish')],
   on_start: ()=>{ fab.style.display='none'; }
 };
