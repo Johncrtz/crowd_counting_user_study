@@ -25,6 +25,8 @@
     .form-row { text-align:left; margin:10px auto; max-width:560px; }
     .form-row select, .form-row input { font-size:15px; padding:4px; }
     .lik { display:inline-block; text-align:center; margin:0 9px; }
+    /* heavy "fat black" keyword emphasis for easier scanning */
+    .kw { font-weight:800; color:#000; }
     /* help (instruction replay) */
     #help-fab { position:fixed; right:18px; bottom:18px; z-index:1000; display:none;
                 width:46px; height:46px; border-radius:50%; border:none; cursor:pointer;
@@ -69,7 +71,7 @@ const T = {
     token_invalid: "This token is not valid or has already been used.",
 
     consent_title: "Before we start",
-    intro_context: "<p style='text-align:left'>When monitoring large crowds on video, it matters <b>where</b> and how many people are present — for example, to spot dangerous crowding at events early. This is helped by dividing an image into meaningful areas: separating dense from less dense zones, or telling individual groups of people apart. The more understandable such a division is to a human, the more one can trust the numbers derived from it.</p><p style='text-align:left'>In this study, we ask you to first divide crowd images yourself and then rate several predefined divisions by how meaningful they are. The study takes about <b>10 minutes</b>; after you finish, your access expires.</p>",
+    intro_context: "<p style='text-align:left'>When monitoring large crowds on video, it matters <b>where</b> and how many people are present — for example, to spot <b class='kw'>dangerous crowding</b> at events early. This is helped by dividing an image into meaningful areas: separating dense from less dense <b class='kw'>zones</b>, or telling individual groups of people apart. The more <b class='kw'>understandable</b> such a division is to a human, the more one can <b class='kw'>trust</b> the numbers derived from it.</p><p style='text-align:left'>In this study, we ask you to first divide crowd images yourself and then rate several predefined divisions by how meaningful they are. The study takes about <b class='kw'>10 minutes</b>; after you finish, <b class='kw'>your access expires</b>.</p>",
     consent_body: "<p style='text-align:left'>Participation is <b>voluntary</b> and you may stop at any time. All responses are <b>fully anonymous</b> — we never collect your name, email or IP. Data are processed for scientific research only, in accordance with the EU <b>GDPR (DSGVO)</b>, and may be published in aggregated form.</p>",
     consent_agree: "I have read this and agree to take part",
 
@@ -92,7 +94,8 @@ const T = {
     finish_submit: "Finish and submit",
 
     draw_title: "Part 1 of 2 — Divide the image into regions",
-    draw_body: "<p style='text-align:left'>You will see photos of crowds. Draw <b>dividing lines</b> that split the image into meaningful regions, so that each region holds a part of the crowd that belongs together. Use, for example, the <b>position</b> of the groups, or where the crowd goes from <b>dense to less dense</b>. You can draw several lines.</p>",
+    draw_body: "<p style='text-align:left'>You will see photos of crowds. <b class='kw'>Draw</b> <b>dividing lines</b> that split the image into meaningful regions, so that each zone you draw encloses, as far as possible, a group that — in your opinion — belongs together. Use, for example, the <b>position</b> of the groups, or where the crowd goes from <b>dense to less dense</b>. You can draw several lines. If you are unsure, click the “<b>?</b>” in the bottom-right corner for hints.</p>",
+    draw_help_extra: "<p style='text-align:left'><b>Some images have no obvious solution — here are a few hints:</b></p><ul style='text-align:left'><li>If you feel that <b>everyone</b> in the image forms a single group, you may enclose the <b>whole image</b> with one line.</li><li>If a <b>single person</b> clearly stands out, you may draw a region around just that one person.</li><li>Your zones may take <b>any shape</b>, as long as it is meaningful: ideally each one is self-contained (closed) and follows the shape of the crowd you want to enclose.</li><li>There is <b>no single correct answer</b> — what matters is that your division makes sense to you and would be understandable to someone else.</li><li>Where the crowd fades gradually from dense to sparse, place the line where the change in density is <b>clearest</b> to you.</li></ul>",
     draw_examples: "Examples",
     ex_good: "Good: a few dividing lines along groups / density changes",
     ex_many: "Wrong: far too many, arbitrary lines",
@@ -106,16 +109,24 @@ const T = {
     conf_lo: "not at all", conf_hi: "very sure",
     open_q: "In one sentence: what made a division <b>clear</b> — or <b>confusing</b> — to you?",
     open_ph: "Your answer…",
-    post2_title: "One more scenario",
-    sys_intro: "<p style='text-align:left'>Imagine a <b>System A</b> that divides images of crowds into regions, and a second <b>System B</b> that evaluates those regions and provides, for each, an estimate of the number of people / the crowd density. In the end you see the divided image including the per-region estimates, and may have to make a decision based on it.</p>",
-    q_depend: "In your estimation, how strongly does the <b>accuracy of B</b> depend on the <b>quality of A's division</b>?",
-    q_trust2: "Imagine you worked with such a system yourself. How much does your <b>trust</b> in the system's outputs depend on <b>how understandable</b> the image division is?",
-    q_useful: "How <b>useful</b> would such a system be for real public-safety monitoring to support decisions?",
+    post2_title: "To finish: a short scenario",
+    sys_intro: "<p style='text-align:left'>Imagine a software tool that supports security staff at a large event. It works in two steps:</p><ul style='text-align:left'><li><b>System A</b> divides the camera image of the crowd into regions — much like you did and rated yourself earlier.</li><li><b>System B</b> then evaluates each of these regions and estimates, for each, the number of people / the density of the crowd.</li></ul><p style='text-align:left'>In the end, an operator sees the divided image with the estimated numbers per region — and decides on that basis, for example <b>where it is getting dangerously crowded</b>.</p>",
+    q_depend: "In your opinion, how strongly does the <b>accuracy of System B's numbers</b> depend on <b>how well System A divided the image</b>?",
+    q_trust2: "Suppose you worked with such a system yourself: how strongly does your <b>trust</b> in the results depend on <b>how understandable</b> the image division is to you?",
+    q_useful: "In your opinion, how <b>useful</b> would such a system be for supporting security staff with such decisions in practice?",
     anch_no: "not at all", anch_strong: "very strongly",
     anch_useless: "useless", anch_useful: "very useful",
 
+    feedback_title: "Feedback (Optional)",
+    feedback_intro: "If you have any comments about the study, you can leave them here. This is optional.",
+    feedback_ph: "Your feedback…", feedback_send: "Submit & finish",
+
     thanks_title: "Thank you!", thanks_body: "Your responses have been saved. You may now close this tab.",
-    saving: "Saving your data — please do not close this page…"
+    saving: "Saving your data — please do not close this page…",
+    save_fail_title: "We couldn't reach the server",
+    save_fail_body: "Your responses have <b>not been saved yet</b>. Please check your internet connection and click <b>Try again</b>. If it keeps failing, click <b>Download my data</b> and send the downloaded file to the researcher — that way your responses will not be lost.",
+    save_retry: "Try again", save_download: "Download my data",
+    save_downloaded: "File downloaded. Please email it to the researcher. Thank you!"
   },
   de: {
     continue: "Weiter", got_it: "Verstanden", finish: "Fertig",
@@ -128,7 +139,7 @@ const T = {
     token_invalid: "Dieser Token ist ungültig oder wurde bereits verwendet.",
 
     consent_title: "Bevor es losgeht",
-    intro_context: "<p style='text-align:left'>In der Videoüberwachung großer Menschenmengen ist es wichtig zu erfassen, <b>wo</b> sich wie viele Menschen befinden — etwa um bei Veranstaltungen gefährliche Gedrängesituationen früh zu erkennen. Dabei hilft es, ein Bild in sinnvolle Bereiche zu unterteilen: dichte und weniger dichte Zonen oder einzelne Personengruppen voneinander zu trennen. Je nachvollziehbarer eine solche Unterteilung für den Menschen ist, desto eher kann man den daraus abgeleiteten Zahlen vertrauen.</p><p style='text-align:left'>In der folgenden Studie bitten wir Sie, selbst Bilder von Menschenmengen zu unterteilen sowie verschiedene vorgegebene Unterteilungen nach ihrer Sinnhaftigkeit zu bewerten. Die Teilnahme an der Studie dauert ca. 10 Minuten; nach Abschluss erlischt Ihr Zugang.</p>",
+    intro_context: "<p style='text-align:left'>In der Videoüberwachung großer Menschenmengen ist es wichtig zu erfassen, <b>wo</b> sich wie viele Menschen befinden — etwa um bei Veranstaltungen <b class='kw'>gefährliche Gedrängesituationen</b> früh zu erkennen. Dabei hilft es, ein Bild in sinnvolle Bereiche zu unterteilen: dichte und weniger dichte <b class='kw'>Zonen</b> oder einzelne Personengruppen voneinander zu trennen. Je <b class='kw'>nachvollziehbarer</b> eine solche Unterteilung für den Menschen ist, desto eher kann man den daraus abgeleiteten Zahlen <b class='kw'>vertrauen</b>.</p><p style='text-align:left'>In der folgenden Studie bitten wir Sie, selbst Bilder von Menschenmengen zu unterteilen sowie verschiedene vorgegebene Unterteilungen nach ihrer Sinnhaftigkeit zu bewerten. Die Teilnahme an der Studie dauert ca. <b class='kw'>10 Minuten</b>; nach Abschluss <b class='kw'>erlischt Ihr Zugang</b>.</p>",
     consent_body: "<p style='text-align:left'>Die Teilnahme ist <b>freiwillig</b> und kann jederzeit abgebrochen werden. Alle Antworten sind <b>vollständig anonym</b> — wir erheben weder Namen, E-Mail noch IP-Adresse. Die Daten werden ausschließlich zu wissenschaftlichen Zwecken gemäß <b>DSGVO</b> verarbeitet und ggf. in aggregierter Form veröffentlicht.</p>",
     consent_agree: "Ich habe dies gelesen und nehme teil",
 
@@ -151,7 +162,8 @@ const T = {
     finish_submit: "Abschließen und absenden",
 
     draw_title: "Teil 1 von 2 — Bild in Regionen unterteilen",
-    draw_body: "<p style='text-align:left'>Sie sehen Fotos von Menschenmengen. Zeichnen Sie selbst <b>Trennlinien</b>, die das Bild in sinnvolle Regionen unterteilen — so, dass jede Region einen zusammengehörigen Teil der Menge enthält. Orientieren Sie sich zum Beispiel an der <b>Position</b> der Gruppen oder daran, wo die Menge von <b>dicht zu weniger dicht</b> übergeht. Sie können mehrere Linien ziehen.</p>",
+    draw_body: "<p style='text-align:left'>Sie sehen Fotos von Menschenmengen. <b class='kw'>Zeichnen</b> Sie selbst <b>Trennlinien</b>, die das Bild in sinnvolle Regionen unterteilen — so, dass jede eingezeichnete Zone möglichst eine Ihrer Meinung nach zusammengehörige Gruppe umschließt. Orientieren Sie sich zum Beispiel an der <b>Position</b> der Gruppen oder daran, wo die Menge von <b>dicht zu weniger dicht</b> übergeht. Sie können mehrere Linien ziehen. Sollten Sie sich unsicher sein, klicken Sie auf das „<b>?</b>“ in der unteren rechten Ecke, um Hinweise zu erhalten.</p>",
+    draw_help_extra: "<p style='text-align:left'><b>Manche Bilder haben keine offensichtliche Lösung — hier einige Hinweise:</b></p><ul style='text-align:left'><li>Empfinden Sie <b>alle</b> abgebildeten Personen als eine einzige zusammengehörige Gruppe, dürfen Sie das <b>komplette Bild</b> mit einer einzigen Linie umkreisen.</li><li>Sticht für Sie eine <b>einzelne Person</b> besonders hervor, dürfen Sie auch nur um diese eine Person eine Region zeichnen.</li><li>Ihre Zonen dürfen <b>beliebige Formen</b> annehmen, solange sie sinnvoll sind: idealerweise ist jede Form in sich geschlossen und passt sich der Form der Menschenmenge an, die Sie umschließen möchten.</li><li>Es gibt <b>keine einzig richtige Lösung</b> — entscheidend ist, dass Ihre Aufteilung für Sie nachvollziehbar und auch für andere verständlich wäre.</li><li>Geht die Menge fließend von dicht zu locker über, ziehen Sie die Trennlinie dort, wo der Dichteunterschied für Sie <b>am deutlichsten</b> ist.</li></ul>",
     draw_examples: "Beispiele",
     ex_good: "Gut: wenige Trennlinien entlang der Gruppen / Dichteübergänge",
     ex_many: "Falsch: viel zu viele, willkürliche Linien",
@@ -165,16 +177,24 @@ const T = {
     conf_lo: "gar nicht", conf_hi: "sehr sicher",
     open_q: "In einem Satz: Was machte eine Aufteilung für Sie <b>nachvollziehbar</b> — oder <b>verwirrend</b>?",
     open_ph: "Ihre Antwort…",
-    post2_title: "Noch ein Szenario",
-    sys_intro: "<p style='text-align:left'>Stellen Sie sich ein <b>System A</b> vor, das Bilder von Menschengruppen in Regionen aufteilt, und ein zweites <b>System B</b>, das diese Regionen auswertet und für jede eine Schätzung der Personenanzahl bzw. Menschendichte liefert. Am Ende sehen Sie das aufgeteilte Bild inklusive der Schätzungen pro Region und müssen gegebenenfalls auf dieser Grundlage eine Entscheidung treffen.</p>",
-    q_depend: "Wie stark hängt Ihrer Einschätzung nach die <b>Genauigkeit der Ergebnisse von B</b> von der <b>Qualität der Aufteilung durch A</b> ab?",
-    q_trust2: "Stellen Sie sich vor, Sie würden selbst mit einem solchen System arbeiten. Wie sehr hängt Ihr <b>Vertrauen</b> in die Aussagen des Systems davon ab, wie <b>nachvollziehbar</b> die Bildaufteilung ist?",
-    q_useful: "Wie <b>nützlich</b> wäre ein solches System für reales Sicherheits-Monitoring zur Entscheidungsunterstützung?",
+    post2_title: "Zum Abschluss: ein kurzes Szenario",
+    sys_intro: "<p style='text-align:left'>Stellen Sie sich eine Software vor, die Sicherheitskräfte bei einer Großveranstaltung unterstützt. Sie arbeitet in zwei Schritten:</p><ul style='text-align:left'><li><b>System A</b> unterteilt das Kamerabild der Menschenmenge in Regionen — ähnlich, wie Sie es zuvor selbst getan und bewertet haben.</li><li><b>System B</b> wertet anschließend jede dieser Regionen aus und schätzt für jede die Personenanzahl bzw. die Dichte der Menge.</li></ul><p style='text-align:left'>Am Ende sieht eine Bedienerin oder ein Bediener das unterteilte Bild mit den geschätzten Zahlen je Region — und entscheidet auf dieser Grundlage, etwa <b>wo es gefährlich eng wird</b>.</p>",
+    q_depend: "Wie stark hängt Ihrer Meinung nach die <b>Genauigkeit der Zahlen von System B</b> davon ab, wie <b>gut System A das Bild aufgeteilt</b> hat?",
+    q_trust2: "Angenommen, Sie würden selbst mit einem solchen System arbeiten: Wie stark hängt Ihr <b>Vertrauen</b> in die Ergebnisse davon ab, wie <b>nachvollziehbar</b> die Aufteilung des Bildes für Sie ist?",
+    q_useful: "Wie <b>nützlich</b> wäre ein solches System Ihrer Meinung nach, um Sicherheitskräfte bei solchen Entscheidungen in der Praxis zu unterstützen?",
     anch_no: "gar nicht", anch_strong: "sehr stark",
     anch_useless: "nutzlos", anch_useful: "sehr nützlich",
 
+    feedback_title: "Feedback (optional)",
+    feedback_intro: "Wenn Sie Anmerkungen zur Studie haben, können Sie sie hier hinterlassen. Dies ist freiwillig.",
+    feedback_ph: "Ihr Feedback…", feedback_send: "Absenden & beenden",
+
     thanks_title: "Vielen Dank!", thanks_body: "Ihre Antworten wurden gespeichert. Sie können diesen Tab jetzt schließen.",
-    saving: "Daten werden gespeichert — bitte diese Seite nicht schließen…"
+    saving: "Daten werden gespeichert — bitte diese Seite nicht schließen…",
+    save_fail_title: "Der Server ist nicht erreichbar",
+    save_fail_body: "Ihre Antworten wurden noch <b>nicht gespeichert</b>. Bitte prüfen Sie Ihre Internetverbindung und klicken Sie auf <b>Erneut versuchen</b>. Falls es weiterhin fehlschlägt, klicken Sie auf <b>Daten herunterladen</b> und senden Sie die heruntergeladene Datei an die Studienleitung — so gehen Ihre Antworten nicht verloren.",
+    save_retry: "Erneut versuchen", save_download: "Daten herunterladen",
+    save_downloaded: "Datei heruntergeladen. Bitte senden Sie sie an die Studienleitung. Vielen Dank!"
   }
 };
 const t = (k) => T[L][k];
@@ -265,10 +285,16 @@ function panel(pts,overlay,w,h){
 // example illustrations for the draw instructions:
 // a few sensible dividing lines vs. too many arbitrary ones
 function exLines(L){ return k=>L.map(([a,b,c,d])=>`<line x1="${a}" y1="${b}" x2="${c}" y2="${d}" ${k}/>`).join(''); }
-function exPartGood(){ const w=150,h=110; const pts=makeCrowd(7,w,h,2);
-  const ln=exLines([[80,0,66,110],[66,60,150,72]]);
+// two clearly separated groups with an empty vertical gap around x≈76 (deterministic jitter ≤ ±20,
+// so no point ever lands in the gap) — used by BOTH example panels so good/bad show the same crowd
+function exCrowd2(){ const w=150,h=110, r=mulberry32(11), pts=[];
+  for(const [cx,cy] of [[40,52],[112,58]])
+    for(let i=0;i<50;i++) pts.push([cx+(r()-0.5)*40, cy+(r()-0.5)*60]);
+  return pts.filter(p=>p[0]>4&&p[0]<w-4&&p[1]>4&&p[1]<h-4); }
+function exPartGood(){ const w=150,h=110; const pts=exCrowd2();
+  const ln=k=>`<polyline points="78,2 72,40 82,74 76,108" ${k}/>`;   // one divider sitting in the gap
   return svgURI(`<rect width="${w}" height="${h}" fill="#f4f4f2"/>${dotsSVG(pts)}${ln(STKH)}${ln(STK)}`,w,h); }
-function exPartMany(){ const w=150,h=110; const pts=makeCrowd(7,w,h,2); const L=[];
+function exPartMany(){ const w=150,h=110; const pts=exCrowd2(); const L=[];
   for(let i=1;i<6;i++) L.push([i*25,0,i*25,h]);
   for(let i=1;i<4;i++) L.push([0,i*27,w,i*27]);
   const ln=exLines(L);
@@ -594,7 +620,7 @@ const draw_instr = {
       <div class="grp"><img src="${exPartMany()}"><div style="color:#c0392b">✗ ${t('ex_many')}</div></div>
     </div>`,
   choices: ()=>[t('got_it')],
-  on_start: ()=>{ currentInstructions = `<h4>${t('draw_title')}</h4>${t('draw_body')}`; fab.style.display='block'; }
+  on_start: ()=>{ currentInstructions = `<h4>${t('draw_title')}</h4>${t('draw_body')}${t('draw_help_extra')}`; fab.style.display='block'; }
 };
 function drawTrial(stim, isPractice=false){
   const aspect=(stim.W||4)/(stim.H||3);
@@ -643,17 +669,89 @@ const post2 = {
   data: { task:'post_scenario' }
 };
 
-// 7) save + mark token used + thanks
-const save_data = {
-  type: jsPsychPipe, action: "save", experiment_id: EXPERIMENT_ID,
-  filename: ()=>`${TOKEN || subject_id}.csv`,
-  data_string: ()=>jsPsych.data.get().csv()
+// 6c) optional free-text feedback — its submit button is the final action that triggers the save + end
+const feedback = {
+  type: jsPsychSurveyHtmlForm,
+  preamble: ()=>`<h3>${t('feedback_title')}</h3><p style="text-align:left;max-width:560px;margin:10px auto">${t('feedback_intro')}</p>`,
+  button_label: ()=>t('feedback_send'),
+  html: ()=>`<div class="form-row"><textarea name="feedback" rows="4" placeholder="${t('feedback_ph')}"`
+    + ` style="width:100%;max-width:560px;font-size:15px;padding:6px"></textarea></div>`,
+  data: { task:'feedback' }
 };
-const finalize_token = {   // invalidate the token only AFTER a successful submit
-  type: jsPsychHtmlButtonResponse,
-  stimulus: ()=>`<p>${t('saving')}</p>`, choices: [], trial_duration: 50,
-  on_start: ()=>{ markTokenUsed(TOKEN); }
-};
+
+// 7) save (robust) + mark token used + thanks
+//    Replaces the bare jsPsychPipe call. Guarantees: (a) the token is burned ONLY after the
+//    upload is confirmed, (b) network/server failures retry, and (c) on total failure the data is
+//    NOT lost — the participant gets their CSV as a local download and the token stays valid to retry.
+const DATAPIPE_URL = "https://pipe.jspsych.org/api/data/";
+const SAVE_MAX_ATTEMPTS = 4;
+
+// one upload attempt; mirrors @jspsych-contrib/plugin-pipe's request exactly
+async function datapipePost(filename, csv){
+  const resp = await fetch(DATAPIPE_URL, {
+    method: "POST",
+    headers: { "Content-Type":"application/json", "Accept":"*/*" },
+    body: JSON.stringify({ experimentID: EXPERIMENT_ID, filename, data: csv })
+  });
+  let body = {}; try { body = await resp.json(); } catch(e){ /* non-JSON body */ }
+  // success = HTTP ok and no error field. A "filename already exists" reply means a previous
+  // attempt's write actually landed on OSF (its response was just lost) -> treat as saved.
+  const ok = (resp.ok && !body.error) || /exists/i.test(JSON.stringify(body));
+  return { ok, status: resp.status, body };
+}
+
+class SaveDataPlugin {
+  static info = { name:"save-data", version:"1.0.0", parameters:{},
+    data:{ save_ok:{type:PT.BOOL}, save_attempts:{type:PT.INT}, save_status:{type:PT.INT} } };
+  constructor(jsPsych){ this.jsPsych=jsPsych; }
+  trial(display_element, trial){
+    fab.style.display='none';                                  // hide the help (?) button on the final screen
+    const csv = this.jsPsych.data.get().csv();                 // snapshot once; retries reuse the same data
+    // real participants -> one file per token (TOKEN.csv); the reusable test token -> unique file per run
+    const filename = (TOKEN===TEST_TOKEN)
+      ? `${TOKEN}_${subject_id}.csv`
+      : `${TOKEN || subject_id}.csv`;
+    const self = this;
+
+    const downloadCSV = ()=>{
+      const blob = new Blob([csv], { type:"text/csv" });
+      const url  = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.href=url; a.download=filename;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url), 5000);
+    };
+
+    const run = async ()=>{
+      for(let attempt=1; attempt<=SAVE_MAX_ATTEMPTS; attempt++){
+        display_element.innerHTML =
+          `<p>${t('saving')}</p><p style="color:#aaa;font-size:13px">(${attempt}/${SAVE_MAX_ATTEMPTS})</p>`;
+        try {
+          const r = await datapipePost(filename, csv);
+          if(r.ok){
+            await markTokenUsed(TOKEN);                         // burn token ONLY after a confirmed save
+            self.jsPsych.finishTrial({ save_ok:true, save_attempts:attempt, save_status:r.status });
+            return;                                            // -> timeline advances to the "thank you" screen
+          }
+        } catch(e){ /* network error -> fall through to retry */ }
+        if(attempt < SAVE_MAX_ATTEMPTS) await new Promise(res=>setTimeout(res, 1200*attempt));  // backoff
+      }
+      // all attempts failed: token stays valid; do NOT advance to "thanks". Offer retry + manual download.
+      display_element.innerHTML = `
+        <h3>${t('save_fail_title')}</h3>
+        <p style="text-align:left;max-width:560px;margin:10px auto">${t('save_fail_body')}</p>
+        <div id="sd-note" style="color:#1a8a3a;font-weight:bold;min-height:1.4em;margin:8px"></div>
+        <button class="jspsych-btn" id="sd-retry" style="margin-right:8px">${t('save_retry')}</button>
+        <button class="jspsych-btn" id="sd-dl">${t('save_download')}</button>`;
+      display_element.querySelector('#sd-retry').onclick = ()=>run();
+      display_element.querySelector('#sd-dl').onclick = ()=>{
+        downloadCSV();
+        display_element.querySelector('#sd-note').textContent = t('save_downloaded');
+      };
+    };
+    run();
+  }
+}
+const save_and_finalize = { type: SaveDataPlugin };
 const thanks = {
   type: jsPsychHtmlButtonResponse,
   stimulus: ()=>`<h3>${t('thanks_title')}</h3><p>${t('thanks_body')}</p>`,
@@ -693,8 +791,8 @@ const preload = { type: jsPsychPreload, images: preload_imgs, show_progress_bar:
                   continue_after_error:true, message:"Loading images… / Bilder werden geladen…" };
 
 const timeline = [ lang, token_gate, consent, demographics, preload,
-                   draw_instr, ...draw_block, bws_instr, ...bws_block, post1, post2 ];
-if(EXPERIMENT_ID!=="REPLACE_WITH_DATAPIPE_ID"){ timeline.push(save_data, finalize_token); }
+                   draw_instr, ...draw_block, bws_instr, ...bws_block, post1, post2, feedback ];
+if(EXPERIMENT_ID!=="REPLACE_WITH_DATAPIPE_ID"){ timeline.push(save_and_finalize); }
 timeline.push(thanks);
 
 jsPsych.run(timeline);
