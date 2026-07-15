@@ -44,10 +44,9 @@
    CONFIG
    =========================================================================== */
 const EXPERIMENT_ID = "yGbGMF1EoEGh";   // DataPipe Experiment ID
-// Open-link access — no tokens. One participation per person is enforced softly: a
-// localStorage flag set after a confirmed save + an "already taken part" button on the
-// welcome screen. Append ?test=1 to the URL for test runs: bypasses the lock and prefixes
-// the data file with TEST_ so it can be filtered out during analysis.
+// Open-link access — no tokens. One participation per person is enforced softly via a
+// localStorage flag set after a confirmed save. Append ?test=1 to the URL for test runs:
+// bypasses the lock and prefixes the data file with TEST_ so it can be filtered out.
 const TEST_MODE = new URLSearchParams(location.search).get("test") === "1";
 const DONE_KEY    = "cc_study_done_v1";     // localStorage key marking a completed run (stores the participant code)
 const PENDING_KEY = "cc_study_pending_v1";  // localStorage key: upload attempted but never confirmed
@@ -69,14 +68,11 @@ const T = {
     practice: "PRACTICE — this one does not count",
     img_source: "Image source",
 
-    welcome: "<h2>Welcome</h2><p style='text-align:left'>Thank you for your interest in this study! Anyone may take part — but please take part <b>only once</b>.</p>",
-    btn_start: "Start the study", btn_already: "I have already taken part",
-    already_title: "Thank you!",
     already_body: "This study can be taken only once per person — and you have already taken part. Thank you again for your support!",
 
     consent_title: "Before we start",
     intro_context: "<p style='text-align:left'>At large group events, dense crowding can become a <b class='kw'>risk</b> to people. So far the situation is often still estimated by hand — which is laborious and carries a certain <b class='kw'>potential for error</b>; <b class='kw'>video-based assistance systems</b> can help here through automation. This is helped by dividing an image into meaningful areas: separating dense from less dense <b class='kw'>zones</b>, or telling individual groups of people apart. The more <b class='kw'>understandable</b> such a division is to a human, the more one can <b class='kw'>trust</b> the numbers derived from it.</p><p style='text-align:left'>In this study, we ask you to first divide crowd images yourself and then rate several predefined divisions by how meaningful they are. The study takes about <b class='kw'>10 minutes</b>. Please complete it <b class='kw'>only once</b>.</p>",
-    consent_body: "<p style='text-align:left'>Participation is <b>voluntary</b> and you may stop at any time. All responses are <b>fully anonymous</b> — we never collect your name, email or IP. Data are processed for scientific research only, in accordance with the EU <b>GDPR (DSGVO)</b>, and may be published in aggregated form. If you enter the optional prize draw on its separate form at the end, the email address you use there is never linked to your answers and is deleted after the draw.</p>",
+    consent_body: "<p style='text-align:left'>Participation is <b>voluntary</b> and you may stop at any time. All responses are <b>fully anonymous</b> — we never collect your name, email or IP. Data are processed for scientific research only, in accordance with the EU <b>GDPR (DSGVO)</b>, and may be published in aggregated form.</p>",
     consent_agree: "I have read this and agree to take part",
 
     demo_title: "A few details about you",
@@ -140,14 +136,11 @@ const T = {
     practice: "ÜBUNG — dieser Durchgang zählt nicht",
     img_source: "Bildquelle",
 
-    welcome: "<h2>Willkommen</h2><p style='text-align:left'>Vielen Dank für Ihr Interesse an dieser Studie! Jede und jeder darf teilnehmen — bitte jedoch nur <b>einmal</b>.</p>",
-    btn_start: "Studie starten", btn_already: "Ich habe bereits teilgenommen",
-    already_title: "Vielen Dank!",
     already_body: "Diese Studie kann pro Person nur einmal durchgeführt werden — und Sie haben bereits teilgenommen. Nochmals vielen Dank für Ihre Unterstützung!",
 
     consent_title: "Bevor es losgeht",
     intro_context: "<p style='text-align:left'>Bei großen Gruppenveranstaltungen kann dichtes Gedränge zu einem <b class='kw'>Risiko</b> für die Menschen werden. Bislang wird die Lage oft noch händisch eingeschätzt, was aufwendig ist und ein gewisses <b class='kw'>Fehlerpotential</b> birgt — <b class='kw'>videogestützte Assistenzsysteme</b> können hier durch Automatisierung unterstützen. Dabei hilft es, ein Bild in sinnvolle Bereiche zu unterteilen: dichte und weniger dichte <b class='kw'>Zonen</b> oder einzelne Personengruppen voneinander zu trennen. Je <b class='kw'>nachvollziehbarer</b> eine solche Unterteilung für den Menschen ist, desto eher kann man den daraus abgeleiteten Zahlen <b class='kw'>vertrauen</b>.</p><p style='text-align:left'>In der folgenden Studie bitten wir Sie, selbst Bilder von Menschenmengen zu unterteilen sowie verschiedene vorgegebene Unterteilungen nach ihrer Sinnhaftigkeit zu bewerten. Die Teilnahme an der Studie dauert ca. <b class='kw'>10 Minuten</b>. Bitte nehmen Sie nur <b class='kw'>einmal</b> teil.</p>",
-    consent_body: "<p style='text-align:left'>Die Teilnahme ist <b>freiwillig</b> und kann jederzeit abgebrochen werden. Alle Antworten sind <b>vollständig anonym</b> — wir erheben weder Namen, E-Mail noch IP-Adresse. Die Daten werden ausschließlich zu wissenschaftlichen Zwecken gemäß <b>DSGVO</b> verarbeitet und ggf. in aggregierter Form veröffentlicht. Nehmen Sie am Ende am optionalen Gewinnspiel über das separate Formular teil, wird die dort angegebene E-Mail-Adresse niemals mit Ihren Antworten verknüpft und nach der Verlosung gelöscht.</p>",
+    consent_body: "<p style='text-align:left'>Die Teilnahme ist <b>freiwillig</b> und kann jederzeit abgebrochen werden. Alle Antworten sind <b>vollständig anonym</b> — wir erheben weder Namen, E-Mail noch IP-Adresse. Die Daten werden ausschließlich zu wissenschaftlichen Zwecken gemäß <b>DSGVO</b> verarbeitet und ggf. in aggregierter Form veröffentlicht.</p>",
     consent_agree: "Ich habe dies gelesen und nehme teil",
 
     demo_title: "Ein paar Angaben zu Ihnen",
@@ -508,19 +501,6 @@ const lang = {
   on_finish: (d)=>{ L = d.response===0 ? "de" : "en"; jsPsych.data.addProperties({language:L}); }
 };
 
-// 1) welcome (open link) — offers an honest exit for people who already took part
-const welcome = {
-  type: jsPsychHtmlButtonResponse,
-  stimulus: ()=>t('welcome'),
-  choices: ()=>[t('btn_start'), t('btn_already')],
-  data: { task:"welcome" },
-  on_finish: (d)=>{
-    if(d.response===1){   // "I have already taken part" -> polite stop, nothing is saved
-      jsPsych.abortExperiment(`<h3>${t('already_title')}</h3><p>${t('already_body')}</p>`);
-    }
-  }
-};
-
 // 2) consent + privacy
 const consent = {
   type: jsPsychHtmlButtonResponse,
@@ -790,7 +770,7 @@ for(const s of [practiceDraw, ...drawSet]) preload_imgs.push(STIM_BASE+s.raw);
 const preload = { type: jsPsychPreload, images: preload_imgs, show_progress_bar:true,
                   continue_after_error:true, message:"Loading images… / Bilder werden geladen…" };
 
-const timeline = [ lang, welcome, consent, demographics, preload,
+const timeline = [ lang, consent, demographics, preload,
                    draw_instr, ...draw_block, bws_instr, ...bws_block, post1, post2, feedback ];
 if(EXPERIMENT_ID!=="REPLACE_WITH_DATAPIPE_ID"){ timeline.push(save_and_finalize); }
 timeline.push(thanks);
