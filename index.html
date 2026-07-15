@@ -51,7 +51,6 @@ const EXPERIMENT_ID = "yGbGMF1EoEGh";   // DataPipe Experiment ID
 const TEST_MODE = new URLSearchParams(location.search).get("test") === "1";
 const DONE_KEY    = "cc_study_done_v1";     // localStorage key marking a completed run (stores the participant code)
 const PENDING_KEY = "cc_study_pending_v1";  // localStorage key: upload attempted but never confirmed
-const CONTACT_EMAIL = "";   // TODO set before go-live! Shown as contact for data deletion + failed-save rescue.
 const STIM_BASE = "stimuli_075/";   // rendered images, served next to index.html
 const N_BWS  = 16;  // BWS trials per participant (random subset of STIMULI)
 const N_DRAW = 3;   // draw trials per participant
@@ -77,7 +76,7 @@ const T = {
 
     consent_title: "Before we start",
     intro_context: "<p style='text-align:left'>At large group events, dense crowding can become a <b class='kw'>risk</b> to people. So far the situation is often still estimated by hand — which is laborious and carries a certain <b class='kw'>potential for error</b>; <b class='kw'>video-based assistance systems</b> can help here through automation. This is helped by dividing an image into meaningful areas: separating dense from less dense <b class='kw'>zones</b>, or telling individual groups of people apart. The more <b class='kw'>understandable</b> such a division is to a human, the more one can <b class='kw'>trust</b> the numbers derived from it.</p><p style='text-align:left'>In this study, we ask you to first divide crowd images yourself and then rate several predefined divisions by how meaningful they are. The study takes about <b class='kw'>10 minutes</b>. Please complete it <b class='kw'>only once</b>.</p>",
-    consent_body: "<p style='text-align:left'>Participation is <b>voluntary</b> and you may stop at any time. All responses are <b>fully anonymous</b> — we never collect your name, email or IP. Data are processed for scientific research only, in accordance with the EU <b>GDPR (DSGVO)</b>, and may be published in aggregated form. At the end you will see an anonymous <b>participant code</b>: if you note it down, you can later ask us to delete your responses — without revealing who you are. If you choose to contact us (e.g. for deletion) or to enter the optional prize draw on its separate form, the email address you use is never linked to your answers and is deleted once handled.</p>",
+    consent_body: "<p style='text-align:left'>Participation is <b>voluntary</b> and you may stop at any time. All responses are <b>fully anonymous</b> — we never collect your name, email or IP. Data are processed for scientific research only, in accordance with the EU <b>GDPR (DSGVO)</b>, and may be published in aggregated form. If you enter the optional prize draw on its separate form at the end, the email address you use there is never linked to your answers and is deleted after the draw.</p>",
     consent_agree: "I have read this and agree to take part",
 
     demo_title: "A few details about you",
@@ -127,8 +126,6 @@ const T = {
     feedback_ph: "Your feedback…", feedback_send: "Submit & finish",
 
     thanks_title: "Thank you!", thanks_body: "Your responses have been saved. You may now close this tab.",
-    withdraw_text: "Your anonymous participant code: <b>{ID}</b> — please note it down now. If you ever want your responses deleted, contact the researcher and quote this code — it identifies your data, not you.",
-    contact_line: "Contact: ",
     prize_text: "🎁 As a thank-you, we're giving away <b>3 × €10 Amazon gift cards</b> among all participants. To enter, click below and add your email on a <b>separate</b> form — it is <b>not linked</b> to your answers and is deleted after the draw.",
     prize_btn: "Enter the prize draw",
     saving: "Saving your data — please do not close this page…",
@@ -150,7 +147,7 @@ const T = {
 
     consent_title: "Bevor es losgeht",
     intro_context: "<p style='text-align:left'>Bei großen Gruppenveranstaltungen kann dichtes Gedränge zu einem <b class='kw'>Risiko</b> für die Menschen werden. Bislang wird die Lage oft noch händisch eingeschätzt, was aufwendig ist und ein gewisses <b class='kw'>Fehlerpotential</b> birgt — <b class='kw'>videogestützte Assistenzsysteme</b> können hier durch Automatisierung unterstützen. Dabei hilft es, ein Bild in sinnvolle Bereiche zu unterteilen: dichte und weniger dichte <b class='kw'>Zonen</b> oder einzelne Personengruppen voneinander zu trennen. Je <b class='kw'>nachvollziehbarer</b> eine solche Unterteilung für den Menschen ist, desto eher kann man den daraus abgeleiteten Zahlen <b class='kw'>vertrauen</b>.</p><p style='text-align:left'>In der folgenden Studie bitten wir Sie, selbst Bilder von Menschenmengen zu unterteilen sowie verschiedene vorgegebene Unterteilungen nach ihrer Sinnhaftigkeit zu bewerten. Die Teilnahme an der Studie dauert ca. <b class='kw'>10 Minuten</b>. Bitte nehmen Sie nur <b class='kw'>einmal</b> teil.</p>",
-    consent_body: "<p style='text-align:left'>Die Teilnahme ist <b>freiwillig</b> und kann jederzeit abgebrochen werden. Alle Antworten sind <b>vollständig anonym</b> — wir erheben weder Namen, E-Mail noch IP-Adresse. Die Daten werden ausschließlich zu wissenschaftlichen Zwecken gemäß <b>DSGVO</b> verarbeitet und ggf. in aggregierter Form veröffentlicht. Am Ende sehen Sie einen anonymen <b>Teilnahme-Code</b>: Wenn Sie ihn notieren, können Sie später die Löschung Ihrer Antworten verlangen — ohne Ihre Identität preiszugeben. Sollten Sie uns kontaktieren (z. B. zur Löschung) oder am optionalen Gewinnspiel über das separate Formular teilnehmen, wird die dabei verwendete E-Mail-Adresse niemals mit Ihren Antworten verknüpft und nach Bearbeitung gelöscht.</p>",
+    consent_body: "<p style='text-align:left'>Die Teilnahme ist <b>freiwillig</b> und kann jederzeit abgebrochen werden. Alle Antworten sind <b>vollständig anonym</b> — wir erheben weder Namen, E-Mail noch IP-Adresse. Die Daten werden ausschließlich zu wissenschaftlichen Zwecken gemäß <b>DSGVO</b> verarbeitet und ggf. in aggregierter Form veröffentlicht. Nehmen Sie am Ende am optionalen Gewinnspiel über das separate Formular teil, wird die dort angegebene E-Mail-Adresse niemals mit Ihren Antworten verknüpft und nach der Verlosung gelöscht.</p>",
     consent_agree: "Ich habe dies gelesen und nehme teil",
 
     demo_title: "Ein paar Angaben zu Ihnen",
@@ -200,8 +197,6 @@ const T = {
     feedback_ph: "Ihr Feedback…", feedback_send: "Absenden & beenden",
 
     thanks_title: "Vielen Dank!", thanks_body: "Ihre Antworten wurden gespeichert. Sie können diesen Tab jetzt schließen.",
-    withdraw_text: "Ihr anonymer Teilnahme-Code: <b>{ID}</b> — bitte notieren Sie ihn jetzt. Falls Sie später die Löschung Ihrer Antworten wünschen, nennen Sie der Studienleitung einfach diesen Code — er identifiziert Ihre Daten, nicht Ihre Person.",
-    contact_line: "Kontakt: ",
     prize_text: "🎁 Als Dankeschön verlosen wir unter allen Teilnehmenden <b>3 × 10-€-Amazon-Gutscheine</b>. Zum Mitmachen unten klicken und auf einem <b>separaten</b> Formular Ihre E-Mail eintragen — sie ist <b>nicht</b> mit Ihren Antworten verknüpft und wird nach der Verlosung gelöscht.",
     prize_btn: "Am Gewinnspiel teilnehmen",
     saving: "Daten werden gespeichert — bitte diese Seite nicht schließen…",
@@ -235,15 +230,11 @@ function alreadyDone(){
 }
 function markDone(){
   if(TEST_MODE) return;
-  // store the participant code too, so a repeat visit can re-display it (consent promises the code)
+  // the stored code is never shown to participants; it only links duplicate runs in the data (prior_completed_id)
   try { localStorage.setItem(DONE_KEY, JSON.stringify({ done:new Date().toISOString(), code:subject_id })); } catch(e){ /* ignore */ }
 }
 function doneInfo(){
   try { return JSON.parse(localStorage.getItem(DONE_KEY) || "null"); } catch(e){ return null; }
-}
-function contactLine(){   // researcher contact for deletion requests / failed-save rescue (only if configured)
-  return CONTACT_EMAIL
-    ? `<div style="margin-top:6px">${t('contact_line')}<a href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a></div>` : '';
 }
 
 /* ===========================================================================
@@ -739,8 +730,6 @@ class SaveDataPlugin {
       display_element.innerHTML = `
         <h3>${t('save_fail_title')}</h3>
         <p style="text-align:left;max-width:560px;margin:10px auto">${t('save_fail_body')}</p>
-        <div style="text-align:left;max-width:560px;margin:10px auto;font-size:14px;color:#555">
-          ${t('withdraw_text').replace('{ID}', subject_id)}${contactLine()}</div>
         <div id="sd-note" style="color:#1a8a3a;font-weight:bold;min-height:1.4em;margin:8px"></div>
         <button class="jspsych-btn" id="sd-retry" style="margin-right:8px">${t('save_retry')}</button>
         <button class="jspsych-btn" id="sd-dl">${t('save_download')}</button>`;
@@ -757,8 +746,6 @@ const save_and_finalize = { type: SaveDataPlugin };
 const thanks = {
   type: jsPsychHtmlButtonResponse,
   stimulus: ()=>`<h3>${t('thanks_title')}</h3><p>${t('thanks_body')}</p>`
-    + `<div style="margin:14px auto 0;max-width:560px;padding:12px 16px;border:1px solid #cfd8dc;`
-    + `background:#f5f7f8;border-radius:10px;text-align:left">${t('withdraw_text').replace('{ID}', subject_id)}${contactLine()}</div>`
     + (PRIZE_FORM_URL
         ? `<div style="margin:18px auto 0;max-width:560px;padding:16px;border:1px solid #ffe08a;`
           + `background:#fff8e1;border-radius:10px">`
@@ -809,17 +796,13 @@ if(EXPERIMENT_ID!=="REPLACE_WITH_DATAPIPE_ID"){ timeline.push(save_and_finalize)
 timeline.push(thanks);
 
 if(alreadyDone()){
-  // repeat visit after a completed run -> polite bilingual stop screen (language not chosen yet);
-  // re-displays the stored participant code so it stays recoverable after a reload
-  const info = doneInfo();
+  // repeat visit after a completed run -> polite bilingual stop screen (language not chosen yet)
   document.body.innerHTML = `
     <div style="max-width:640px;margin:80px auto;padding:0 16px;text-align:center;
                 font-family:'Open Sans','Arial',sans-serif;color:#333">
       <h2>Vielen Dank! / Thank you!</h2>
       <p style="font-size:17px">${T.de.already_body}</p>
       <p style="font-size:17px;color:#666">${T.en.already_body}</p>
-      ${info && info.code ? `<p style="font-size:15px;color:#555">Ihr Teilnahme-Code / Your participant code: <b>${info.code}</b></p>` : ''}
-      ${CONTACT_EMAIL ? `<p style="font-size:14px;color:#777">Kontakt / Contact: <a href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a></p>` : ''}
     </div>`;
 } else {
   jsPsych.run(timeline);
